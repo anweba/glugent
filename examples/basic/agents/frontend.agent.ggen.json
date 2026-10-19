@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../packages/schemas/agent.schema.json",
+  "name": "acme-frontend",
+  "output": "dist/agents/frontend.md",
+  "props": { "ROLE": "Frontend Developer" },
+  "sections": [
+    "base/identity",
+    "development/general",
+    { "use": "development/frontend", "props": { "FRAMEWORK": "Next.js" } }
+  ]
+}

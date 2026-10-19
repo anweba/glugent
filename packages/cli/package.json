@@ -1,0 +1,15 @@
+{
+  "name": "@glugent/cli",
+  "version": "0.1.0",
+  "bin": {
+    "glugent": "bin/glugent.js"
+  },
+  "main": "dist/cli.js",
+  "scripts": {
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p .",
+    "test": "node --test dist/test/*.test.js"
+  },
+  "dependencies": {
+    "@glugent/core": "0.1.0"
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "name": "glugent-vscode",
+  "displayName": "Glugent",
+  "description": "Syntax highlighting, diagnostics, completion and build commands for Glugent agent sections.",
+  "version": "0.1.0",
+  "publisher": "glugent",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "workspaceContains:**/glugent.config.json"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "glugent",
+        "aliases": [
+          "Glugent"
+        ],
+        "extensions": [
+          ".ggen.md"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "glugent",
+        "scopeName": "source.glugent",
+        "path": "./syntaxes/glugent.tmLanguage.json"
+      },
+      {
+        "scopeName": "glugent.injection",
+        "path": "./syntaxes/glugent-injection.tmLanguage.json",
+        "injectTo": [
+          "source.glugent"
+        ]
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "glugent.config.json"
+        ],
+        "url": "./schemas/glugent-config.schema.json"
+      },
+      {
+        "fileMatch": [
+          "*.agent.ggen.json"
+        ],
+        "url": "./schemas/agent.schema.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "glugent.buildAll",
+        "title": "Glugent: Build All Agents"
+      },
+      {
+        "command": "glugent.buildAgent",
+        "title": "Glugent: Build Agent..."
+      },
+      {
+        "command": "glugent.validate",
+        "title": "Glugent: Validate Project"
+      }
+    ]
+  },
+  "scripts": {
+    "copy-schemas": "node -e \"const fs=require('fs');fs.mkdirSync('schemas',{recursive:true});for(const f of ['glugent-config','agent'])fs.copyFileSync('../schemas/'+f+'.schema.json','schemas/'+f+'.schema.json')\"",
+    "build": "npm run copy-schemas && esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js --sourcemap",
+    "package": "npm run build && vsce package --no-dependencies",
+    "test": "node -e \"require('fs').rmSync('out-test',{recursive:true,force:true})\" && tsc -p tsconfig.test.json && node --require ./out-test/test/setup.js --test out-test/test/*.test.js"
+  },
+  "devDependencies": {
+    "@glugent/core": "0.1.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.24.0"
+  }
+}

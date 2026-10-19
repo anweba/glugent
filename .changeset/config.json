@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+  "changelog": ["@changesets/changelog-github", { "repo": "OWNER/glugent" }],
+  "commit": false,
+  "fixed": [["@glugent/core", "@glugent/cli"]],
+  "access": "restricted",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch"
+}

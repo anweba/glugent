@@ -1,0 +1,5 @@
+{
+  "name": "@glugent/schemas",
+  "version": "0.1.0",
+  "files": ["glugent-config.schema.json", "agent.schema.json"]
+}

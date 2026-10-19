@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Glugent config",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" },
+    "sections": {
+      "type": "object",
+      "description": "Where section files (Markdown + {{props}}) live. Globs are relative to this config file.",
+      "properties": {
+        "include": { "type": "array", "items": { "type": "string" }, "default": ["**/*.ggen.md"] },
+        "exclude": { "type": "array", "items": { "type": "string" } },
+        "root": { "type": "string", "description": "Section ids are computed relative to this directory (default: the config directory)." }
+      },
+      "additionalProperties": false
+    },
+    "agents": {
+      "type": "object",
+      "description": "Where agent definition files (JSON) live.",
+      "properties": {
+        "include": { "type": "array", "items": { "type": "string" }, "default": ["**/*.agent.ggen.json"] },
+        "exclude": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "props": {
+      "type": "object",
+      "description": "Project-wide props. They override agent props but are overridden by CLI --set.",
+      "additionalProperties": { "type": ["string", "number", "boolean"] }
+    },
+    "outDir": { "type": "string", "default": "dist/agents", "description": "Default output directory for built agents." }
+  },
+  "additionalProperties": false
+}

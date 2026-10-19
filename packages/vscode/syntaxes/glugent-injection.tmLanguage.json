@@ -1,0 +1,177 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "glugent.injection",
+  "injectionSelector": "L:source.glugent",
+  "patterns": [
+    {
+      "include": "#raw"
+    },
+    {
+      "include": "#literal-brace"
+    },
+    {
+      "include": "#if-open"
+    },
+    {
+      "include": "#if-else"
+    },
+    {
+      "include": "#if-close"
+    },
+    {
+      "include": "#optional-default"
+    },
+    {
+      "include": "#optional"
+    },
+    {
+      "include": "#required"
+    }
+  ],
+  "repository": {
+    "raw": {
+      "begin": "\\{!",
+      "end": "!\\}",
+      "name": "meta.template.raw.glugent",
+      "contentName": "markup.raw.glugent",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.raw.begin.glugent"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.raw.end.glugent"
+        }
+      }
+    },
+    "literal-brace": {
+      "match": "\\{\\{|\\}\\}",
+      "name": "constant.character.escape.brace.glugent"
+    },
+    "if-open": {
+      "match": "(\\{-?)\\s*(if)\\s+([\\w.()&|!\\s-]+?)\\s*(\\{)",
+      "name": "meta.template.if.glugent",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.template-expression.begin.glugent"
+        },
+        "2": {
+          "name": "keyword.control.conditional.glugent"
+        },
+        "3": {
+          "name": "variable.other.property.glugent"
+        },
+        "4": {
+          "name": "punctuation.section.block.begin.glugent"
+        }
+      }
+    },
+    "if-else": {
+      "match": "(\\})\\s*(else)(?:\\s+(if)\\s+([\\w.()&|!\\s-]+?))?\\s*(\\{)",
+      "name": "meta.template.if.glugent",
+      "captures": {
+        "1": {
+          "name": "punctuation.section.block.end.glugent"
+        },
+        "2": {
+          "name": "keyword.control.conditional.glugent"
+        },
+        "3": {
+          "name": "keyword.control.conditional.glugent"
+        },
+        "4": {
+          "name": "variable.other.property.glugent"
+        },
+        "5": {
+          "name": "punctuation.section.block.begin.glugent"
+        }
+      }
+    },
+    "if-close": {
+      "match": "(\\})\\s+(-?\\})",
+      "name": "meta.template.if.glugent",
+      "captures": {
+        "1": {
+          "name": "punctuation.section.block.end.glugent"
+        },
+        "2": {
+          "name": "punctuation.definition.template-expression.end.glugent"
+        }
+      }
+    },
+    "required": {
+      "match": "(\\{)\\s*([A-Za-z_][\\w.-]*)\\s*(\\})",
+      "name": "meta.template.required.glugent",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.template-expression.begin.glugent"
+        },
+        "2": {
+          "name": "variable.other.property.glugent"
+        },
+        "3": {
+          "name": "punctuation.definition.template-expression.end.glugent"
+        }
+      }
+    },
+    "optional": {
+      "match": "(\\{)\\s*(-)?([A-Za-z_][\\w.-]*)\\s*(\\?)\\s*(-)?\\s*(\\})",
+      "name": "meta.template.optional.glugent",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.template-expression.begin.glugent"
+        },
+        "2": {
+          "name": "keyword.operator.optional.glugent"
+        },
+        "3": {
+          "name": "variable.other.constant.optional.glugent"
+        },
+        "4": {
+          "name": "keyword.operator.optional.glugent"
+        },
+        "5": {
+          "name": "keyword.operator.optional.glugent"
+        },
+        "6": {
+          "name": "punctuation.definition.template-expression.end.glugent"
+        }
+      }
+    },
+    "optional-default": {
+      "begin": "(\\{)\\s*([A-Za-z_][\\w.-]*)\\s*(\\?)\\s*(\")",
+      "end": "(\")\\s*(\\})",
+      "name": "meta.template.optional.glugent",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.template-expression.begin.glugent"
+        },
+        "2": {
+          "name": "variable.other.constant.optional.glugent"
+        },
+        "3": {
+          "name": "keyword.operator.optional.glugent"
+        },
+        "4": {
+          "name": "punctuation.definition.string.begin.glugent"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.end.glugent"
+        },
+        "2": {
+          "name": "punctuation.definition.template-expression.end.glugent"
+        }
+      },
+      "contentName": "string.quoted.double.default.glugent",
+      "patterns": [
+        {
+          "match": "\\\\[\\s\\S]",
+          "name": "constant.character.escape.glugent"
+        }
+      ]
+    }
+  }
+}
