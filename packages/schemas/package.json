@@ -1,5 +1,17 @@
 {
   "name": "@glugent/schemas",
   "version": "0.1.0",
-  "files": ["glugent-config.schema.json", "agent.schema.json"]
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anweba/glugent.git",
+    "directory": "packages/schemas"
+  },
+  "homepage": "https://github.com/anweba/glugent#readme",
+  "bugs": {
+    "url": "https://github.com/anweba/glugent/issues"
+  },
+  "files": [
+    "glugent-config.schema.json",
+    "agent.schema.json"
+  ]
 }

@@ -3,6 +3,15 @@
   "displayName": "Glugent",
   "description": "Syntax highlighting, diagnostics, completion and build commands for Glugent agent sections.",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anweba/glugent.git",
+    "directory": "packages/vscode"
+  },
+  "homepage": "https://github.com/anweba/glugent#readme",
+  "bugs": {
+    "url": "https://github.com/anweba/glugent/issues"
+  },
   "publisher": "glugent",
   "engines": {
     "vscode": "^1.85.0"

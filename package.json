@@ -2,6 +2,14 @@
   "name": "glugent-monorepo",
   "private": true,
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anweba/glugent.git"
+  },
+  "homepage": "https://github.com/anweba/glugent#readme",
+  "bugs": {
+    "url": "https://github.com/anweba/glugent/issues"
+  },
   "workspaces": [
     "packages/schemas",
     "packages/core",

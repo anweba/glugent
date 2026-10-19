@@ -1,6 +1,15 @@
 {
   "name": "@glugent/cli",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anweba/glugent.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/anweba/glugent#readme",
+  "bugs": {
+    "url": "https://github.com/anweba/glugent/issues"
+  },
   "bin": {
     "glugent": "bin/glugent.js"
   },
