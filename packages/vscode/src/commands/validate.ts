@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { validateProject } from "@glugent/core";
+import { validateProject } from "@anweba/glugent-core";
 import { readFile } from "../editor-files";
 import { ProjectStore } from "../project-store";
 import { Command } from "./command";

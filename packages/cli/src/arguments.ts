@@ -1,4 +1,4 @@
-import { Props } from "@glugent/core";
+import { Props } from "@anweba/glugent-core";
 import { CliError } from "./errors";
 
 /** The parsed command line: `glugent <command> [names...] [flags]`. */

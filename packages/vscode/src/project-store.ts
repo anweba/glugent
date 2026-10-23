@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { findConfigUp, loadProject, Project, validateProject } from "@glugent/core";
+import { findConfigUp, loadProject, Project, validateProject } from "@anweba/glugent-core";
 import { DiagnosticsPublisher } from "./diagnostics-publisher";
 import { readFile } from "./editor-files";
 

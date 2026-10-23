@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { Diagnostic } from "@glugent/core";
+import { Diagnostic } from "@anweba/glugent-core";
 import { Feature } from "./feature";
 
 /** Shows a project's diagnostics in the Problems panel, clearing ones that no longer apply. */

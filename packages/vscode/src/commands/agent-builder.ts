@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { AgentDef, compileAgent, Project, writeBuild } from "@glugent/core";
+import { AgentDef, compileAgent, Project, writeBuild } from "@anweba/glugent-core";
 import { readFile } from "../editor-files";
 
 /** Compiles agents and writes them to disk, telling the user how it went. */

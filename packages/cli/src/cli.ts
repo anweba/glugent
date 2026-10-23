@@ -1,5 +1,5 @@
 import * as path from "path";
-import { findConfigUp, loadProject, Project } from "@glugent/core";
+import { findConfigUp, loadProject, Project } from "@anweba/glugent-core";
 import { Arguments } from "./arguments";
 import { BuildCommand } from "./commands/build";
 import { Command } from "./commands/command";

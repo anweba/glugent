@@ -1,5 +1,5 @@
 import * as path from "path";
-import { Diagnostic } from "@glugent/core";
+import { Diagnostic } from "@anweba/glugent-core";
 
 /** Everything the CLI prints, so commands never touch `console` directly. */
 export class Reporter {

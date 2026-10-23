@@ -4,14 +4,14 @@
 
 ```
 packages/
-  core/     @glugent/core  – config, discovery, parsing, validation, compilation (single source of truth)
-  cli/      @glugent/cli   – thin wrapper: `glugent build|validate|list`
+  core/     @anweba/glugent-core  – config, discovery, parsing, validation, compilation (single source of truth)
+  cli/      @anweba/glugent-cli   – thin wrapper: `glugent build|validate|list`
   vscode/   glugent-vscode – thin wrapper: highlighting, diagnostics, completion, hover, build commands
   schemas/  JSON Schemas for glugent.config.json and agent files
 examples/basic/
 ```
 
-The CLI and the extension both call `@glugent/core`; nothing is implemented twice. In the CLI, `cli.ts` (the `Cli` class) wires `Arguments`, `Reporter` and one `Command` subclass per subcommand in `commands/`; add a command by subclassing `Command` and registering it in `COMMANDS`. Inside `@glugent/core` (`packages/core/src`), each folder is one stage, and the public functions (`loadProject`, `compileAgent`, `validateProject`, `renderTemplate`, `scanTemplate`) are thin wrappers over the classes:
+The CLI and the extension both call `@anweba/glugent-core`; nothing is implemented twice. In the CLI, `cli.ts` (the `Cli` class) wires `Arguments`, `Reporter` and one `Command` subclass per subcommand in `commands/`; add a command by subclassing `Command` and registering it in `COMMANDS`. Inside `@anweba/glugent-core` (`packages/core/src`), each folder is one stage, and the public functions (`loadProject`, `compileAgent`, `validateProject`, `renderTemplate`, `scanTemplate`) are thin wrappers over the classes:
 
 | Folder | Classes | Job |
 |---|---|---|
@@ -56,7 +56,16 @@ cd packages/vscode && npm run package   # produces a glugent-vscode-<version>.vs
 
 Or press F5 in `packages/vscode` with an extension-development launch config. The placeholder grammar (`syntaxes/glugent-injection.tmLanguage.json`) is injected into the Markdown grammar so it works inside lists and code fences; keep it in sync with the syntax in `template.ts`.
 
-## Versioning (0.x = beta)
+## Sending a change
+
+1. Fork the repo, clone your fork and create a branch.
+2. Change the code and update the README if behaviour or syntax changed.
+3. Run `npm run changeset`, select the affected packages and the bump, and write the entry. It is plain Markdown of any length (headings, lists, a migration note). Commit the generated file in `.changeset/` with your change. CI fails on a PR that changes a package without one (`npm run changeset -- --empty` if nothing needs releasing).
+4. Push the branch to your fork and open a PR against `main`. Use Conventional-style PR titles (`feat:`, `fix:`, `docs:`) for a readable history; they do not drive versioning, changesets do.
+
+You never version, tag or release anything yourself; maintainers do that.
+
+### Versioning (0.x = beta)
 
 Glugent is in beta: all packages are `0.x`. Until 1.0.0:
 
@@ -65,13 +74,31 @@ Glugent is in beta: all packages are `0.x`. Until 1.0.0:
 | Breaking (e.g. a syntax change that invalidates existing `.ggen.md` files) | **minor** (`0.1.0` → `0.2.0`) |
 | New feature or fix | **patch** (`0.1.0` → `0.1.1`) |
 
-`@glugent/core` and `@glugent/cli` are released together (same version); `glugent-vscode` and `@glugent/schemas` version on their own.
+`@anweba/glugent-core` and `@anweba/glugent-cli` are released together (same version); `glugent-vscode` and `@anweba/glugent-schemas` version on their own.
 
-## Changelog
+---
 
-1. Change the code and update the README if behaviour or syntax changed.
-2. Run `npm run changeset`, select the affected packages and the bump, and write the entry. It is plain Markdown of any length (headings, lists, a migration note). Commit the generated file in `.changeset/` with your PR. CI fails on a PR that changes a package without one.
-3. After merge to `main`, the Release workflow opens or updates a **Version Packages** PR that bumps versions and writes each package's `CHANGELOG.md`.
-4. Merging that PR tags the release and creates GitHub Releases whose notes are the changelog entries.
+# For maintainers
 
-Use Conventional-style PR titles (`feat:`, `fix:`, `docs:`) for a readable history; they do not drive versioning, changesets do.
+## Releasing
+
+1. After a PR with a changeset is merged to `main`, the Release workflow opens or updates a **Version Packages** PR that bumps versions and writes each package's `CHANGELOG.md`.
+2. Review that PR, then merge it when you want to release. Merging tags the release and creates GitHub Releases whose notes are the changelog entries.
+
+## Patching an older release
+
+`main` always releases the next version. To patch an older line (say a fix for `4.x` while `main` is at `6.x`), branch from that line's last tag:
+
+```bash
+git checkout -b release/4.x @anweba/glugent-core@4.5.5
+# set "baseBranch" in .changeset/config.json to "release/4.x" and commit it
+git push -u origin release/4.x
+```
+
+Then it works like `main`: land the fix with a `patch` changeset (PR into `release/4.x`), merge the **Version Packages** PR the Release workflow opens against that branch, and the tags and GitHub Releases are created (`4.5.6`). Port the fix to `main` by cherry-pick with its own changeset if it applies there; never merge a release branch into `main`.
+
+Notes:
+
+- `release/**` branches are built by CI and the Release workflow; only `baseBranch` is per-branch.
+- Releases are tags first: once the tag is on the remote, the branch can be deleted (the tag keeps the commit alive) and recreated later from the tag. Check `git log <tag>..release/4.x` is empty before deleting.
+- GitHub marks the most recently created Release as "latest"; after a patch on an old line, mark the newest version as latest by hand.

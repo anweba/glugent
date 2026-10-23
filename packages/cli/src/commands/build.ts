@@ -1,4 +1,4 @@
-import { AgentDef, compileAgent, Project, writeBuild } from "@glugent/core";
+import { AgentDef, compileAgent, Project, writeBuild } from "@anweba/glugent-core";
 import { CliError } from "../errors";
 import { Reporter } from "../reporter";
 import { Command } from "./command";

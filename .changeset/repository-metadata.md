@@ -1,7 +1,7 @@
 ---
-"@glugent/core": patch
-"@glugent/cli": patch
-"@glugent/schemas": patch
+"@anweba/glugent-core": patch
+"@anweba/glugent-cli": patch
+"@anweba/glugent-schemas": patch
 "glugent-vscode": patch
 ---
 

@@ -1,4 +1,4 @@
-import { Project } from "@glugent/core";
+import { Project } from "@anweba/glugent-core";
 import { Arguments } from "../arguments";
 import { Reporter } from "../reporter";
 

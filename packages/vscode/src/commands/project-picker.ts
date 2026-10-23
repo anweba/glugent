@@ -1,6 +1,6 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { AgentDef, Project } from "@glugent/core";
+import { AgentDef, Project } from "@anweba/glugent-core";
 import { ProjectStore } from "../project-store";
 
 /** Asks the user which project (and agent) a command should act on. */
