@@ -13,5 +13,8 @@
   "files": [
     "glugent-config.schema.json",
     "agent.schema.json"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

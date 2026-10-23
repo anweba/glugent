@@ -9,6 +9,9 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 permissions:
   contents: write
   pull-requests: write
+  # npm trusted publishing: the job exchanges its OIDC identity for a
+  # short-lived npm publish token, so no NPM_TOKEN secret is stored.
+  id-token: write
 
 jobs:
   release:
@@ -19,15 +22,20 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Trusted publishing needs npm >= 11.5.1 (ships with Node 24).
+          node-version: 24
+          registry-url: https://registry.npmjs.org
           cache: npm
       - run: npm ci
       # Opens/updates the "Version Packages" PR against the pushed branch
-      # (main, or a release/<line> maintenance branch). Merging it tags the
-      # release and creates GitHub Releases from the changelog entries.
+      # (main, or a release/<line> maintenance branch). Merging it publishes
+      # to npm, tags the release and creates GitHub Releases from the
+      # changelog entries.
       - uses: changesets/action@v1
         with:
           version: npm run version
-          publish: npm run release
+          # Releases from release/** branches publish under the "maintenance"
+          # dist-tag so an old line never becomes `latest`.
+          publish: ${{ github.ref_name == 'main' && 'npm run release' || 'npm run release:maintenance' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -3,7 +3,8 @@
   "changelog": ["@changesets/changelog-github", { "repo": "anweba/glugent" }],
   "commit": false,
   "fixed": [["@anweba/glugent-core", "@anweba/glugent-cli"]],
-  "access": "restricted",
+  "access": "public",
   "baseBranch": "main",
-  "updateInternalDependencies": "patch"
+  "updateInternalDependencies": "patch",
+  "privatePackages": { "version": true, "tag": true }
 }

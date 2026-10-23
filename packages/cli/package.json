@@ -14,6 +14,14 @@
     "glugent": "bin/glugent.js"
   },
   "main": "dist/cli.js",
+  "files": [
+    "bin",
+    "dist",
+    "!dist/test"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p .",
     "test": "node --test dist/test/*.test.js"
