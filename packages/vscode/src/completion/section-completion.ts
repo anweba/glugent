@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { Section } from "@glugent/core";
+import { Section } from "@anweba/glugent-core";
 import { Feature } from "../feature";
 import { ProjectStore } from "../project-store";
 

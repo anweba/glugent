@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { convertMarkdown } from "@glugent/core";
+import { convertMarkdown } from "@anweba/glugent-core";
 import { Arguments } from "../arguments";
 import { CliError } from "../errors";
 import { Reporter } from "../reporter";

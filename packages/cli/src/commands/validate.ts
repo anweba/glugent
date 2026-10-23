@@ -1,4 +1,4 @@
-import { Project, validateProject } from "@glugent/core";
+import { Project, validateProject } from "@anweba/glugent-core";
 import { Reporter } from "../reporter";
 import { Command } from "./command";
 

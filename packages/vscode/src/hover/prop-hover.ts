@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { Placeholder, Project, scanTemplate, Section } from "@glugent/core";
+import { Placeholder, Project, scanTemplate, Section } from "@anweba/glugent-core";
 import { SECTION_LANG } from "../constants";
 import { Feature } from "../feature";
 import { ProjectStore } from "../project-store";

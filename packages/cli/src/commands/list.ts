@@ -1,4 +1,4 @@
-import { Project } from "@glugent/core";
+import { Project } from "@anweba/glugent-core";
 import { Command } from "./command";
 
 /** `glugent list`: the agents and sections found in the project. */

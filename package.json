@@ -17,8 +17,8 @@
     "packages/vscode"
   ],
   "scripts": {
-    "build": "npm run build -w @glugent/core && npm run build -w @glugent/cli && npm run build -w glugent-vscode",
-    "test": "npm run build -w @glugent/core && npm run build -w @glugent/cli && npm test -w @glugent/core -w @glugent/cli -w glugent-vscode",
+    "build": "npm run build -w @anweba/glugent-core && npm run build -w @anweba/glugent-cli && npm run build -w glugent-vscode",
+    "test": "npm run build -w @anweba/glugent-core && npm run build -w @anweba/glugent-cli && npm test -w @anweba/glugent-core -w @anweba/glugent-cli -w glugent-vscode",
     "changeset": "changeset",
     "version": "changeset version && npm install --package-lock-only",
     "release": "changeset tag",
