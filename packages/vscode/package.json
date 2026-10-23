@@ -1,5 +1,6 @@
 {
   "name": "glugent-vscode",
+  "private": true,
   "displayName": "Glugent",
   "description": "Syntax highlighting, diagnostics, completion and build commands for Glugent agent sections.",
   "version": "0.1.0",

@@ -21,9 +21,10 @@
     "test": "npm run build -w @anweba/glugent-core && npm run build -w @anweba/glugent-cli && npm test -w @anweba/glugent-core -w @anweba/glugent-cli -w glugent-vscode",
     "changeset": "changeset",
     "version": "changeset version && npm install --package-lock-only",
-    "release": "changeset tag",
+    "release": "npm run build && changeset publish",
     "example:validate": "node packages/cli/bin/glugent.js validate -c examples/basic/glugent.config.json",
-    "example:build": "node packages/cli/bin/glugent.js build -c examples/basic/glugent.config.json"
+    "example:build": "node packages/cli/bin/glugent.js build -c examples/basic/glugent.config.json",
+    "release:maintenance": "npm run build && changeset publish --tag maintenance"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",
