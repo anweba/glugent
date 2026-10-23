@@ -20,5 +20,6 @@ jobs:
       - run: npm run build
       - run: npm test
       # Pull requests that touch a package need a changeset (npm run changeset).
-      - if: github.event_name == 'pull_request'
+      # The Version Packages PR is exempt: it consumes the changesets.
+      - if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
         run: npx changeset status --since=origin/${{ github.base_ref }}
