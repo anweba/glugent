@@ -4,13 +4,13 @@
  * construct start exactly here?".
  */
 
-export const NAME = "[A-Za-z_][\\w.-]*";
+export const NAME = "[A-Za-z_][\\w.]*";
 
 /** A quoted default may contain anything, including raw newlines. */
 export const STRING = '"(?:[^"\\\\]|\\\\[\\s\\S])*"';
 
 /** Characters that can appear in an `if` condition. */
-const CONDITION = "[\\w.()&|!\\s-]+?";
+const CONDITION = "[\\w.()&|!\\s]+?";
 
 /** The next brace that may start or end something: `{{`, `{!`, any other `{`, or any `}`. */
 export const BRACE = /\{\{|\{!|\{|\}/g;

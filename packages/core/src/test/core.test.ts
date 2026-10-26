@@ -173,7 +173,8 @@ test("render: trim markers remove whitespace on the marked side when empty", () 
   assert.equal(renderTemplate("a\n\n{X?-}\n\n\nb", {}).text, "a\n\nb");
   assert.equal(renderTemplate("a\n\n{-X?-}\n\n\nb", {}).text, "ab");
   assert.deepEqual(renderTemplate("{-X?-}", {}).missing, []);
-  assert.equal(scanTemplate("{A-B}").placeholders[0].name, "A-B");
+  assert.equal(scanTemplate("{A-B}").errors.length, 1); // hyphens are not allowed in names
+  assert.equal(scanTemplate("{A.B}").placeholders[0].name, "A.B");
   assert.equal(scanTemplate("{-X?-}").placeholders[0].name, "X");
 });
 
