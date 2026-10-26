@@ -50,7 +50,7 @@
       "name": "meta.literal-brace.glugent"
     },
     "if-open": {
-      "match": "(\\{-?)\\s*(if)\\s+([\\w.()&|!\\s-]+?)\\s*(\\{)",
+      "match": "(\\{-?)\\s*(if)\\s+([\\w.()&|!\\s]+?)\\s*(\\{)",
       "name": "meta.template.if.glugent",
       "captures": {
         "1": {
@@ -68,7 +68,7 @@
       }
     },
     "if-else": {
-      "match": "(\\})\\s*(else)(?:\\s+(if)\\s+([\\w.()&|!\\s-]+?))?\\s*(\\{)",
+      "match": "(\\})\\s*(else)(?:\\s+(if)\\s+([\\w.()&|!\\s]+?))?\\s*(\\{)",
       "name": "meta.template.if.glugent",
       "captures": {
         "1": {
@@ -101,7 +101,7 @@
       }
     },
     "required": {
-      "match": "(\\{)\\s*([A-Za-z_][\\w.-]*)\\s*(\\})",
+      "match": "(\\{)\\s*([A-Za-z_][\\w.]*)\\s*(\\})",
       "name": "meta.template.required.glugent",
       "captures": {
         "1": {
@@ -116,7 +116,7 @@
       }
     },
     "optional": {
-      "match": "(\\{)\\s*(-)?([A-Za-z_][\\w.-]*)\\s*(\\?)\\s*(-)?\\s*(\\})",
+      "match": "(\\{)\\s*(-)?([A-Za-z_][\\w.]*)\\s*(\\?)\\s*(-)?\\s*(\\})",
       "name": "meta.template.optional.glugent",
       "captures": {
         "1": {
@@ -140,7 +140,7 @@
       }
     },
     "optional-default": {
-      "begin": "(\\{)\\s*([A-Za-z_][\\w.-]*)\\s*(\\?)\\s*(\")",
+      "begin": "(\\{)\\s*([A-Za-z_][\\w.]*)\\s*(\\?)\\s*(\")",
       "end": "(\")\\s*(\\})",
       "name": "meta.template.optional.glugent",
       "beginCaptures": {

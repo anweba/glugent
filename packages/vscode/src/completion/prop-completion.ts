@@ -20,7 +20,7 @@ export class PropCompletion implements Feature, vscode.CompletionItemProvider {
 
   provideCompletionItems(doc: vscode.TextDocument, pos: vscode.Position): vscode.CompletionItem[] | undefined {
     const prefix = doc.lineAt(pos).text.slice(0, pos.character);
-    if (!/\{\s*[\w.-]*$/.test(prefix)) return;
+    if (!/\{\s*[\w.]*$/.test(prefix)) return;
     const project = this.store.forDocument(doc);
     if (!project) return;
     return [...this.collectUsage(project)].map(([name, usage]) => this.toItem(name, usage));
