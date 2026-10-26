@@ -35,6 +35,9 @@
         "extensions": [
           ".ggen.md"
         ],
+        "filenamePatterns": [
+          "*.ggen.md"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
