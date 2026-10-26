@@ -45,7 +45,15 @@
       {
         "language": "glugent",
         "scopeName": "source.glugent",
-        "path": "./syntaxes/glugent.tmLanguage.json"
+        "path": "./syntaxes/glugent.tmLanguage.json",
+        "tokenTypes": {
+          "markup.raw.glugent": "string",
+          "meta.literal-brace.glugent": "string"
+        },
+        "unbalancedBracketScopes": [
+          "markup.raw.glugent",
+          "meta.literal-brace.glugent"
+        ]
       },
       {
         "scopeName": "glugent.injection",
