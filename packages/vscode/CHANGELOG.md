@@ -1,5 +1,11 @@
 # glugent-vscode
 
+## 0.1.2
+
+### Patch Changes
+
+- [#5](https://github.com/anweba/glugent/pull/5) [`0f297d3`](https://github.com/anweba/glugent/commit/0f297d3770b55ab4b688b948078fa82033ae5352) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - Fix editor behaviour for `.ggen.md` files: claim them by filename pattern and refresh diagnostics when any Markdown file is edited.
+
 ## 0.1.1
 
 ### Patch Changes
