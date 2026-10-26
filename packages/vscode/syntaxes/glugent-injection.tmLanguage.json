@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "scopeName": "glugent.injection",
-  "injectionSelector": "L:source.glugent",
+  "injectionSelector": "L:source.glugent -markup.raw.glugent",
   "patterns": [
     {
       "include": "#raw"
@@ -47,7 +47,7 @@
     },
     "literal-brace": {
       "match": "\\{\\{|\\}\\}",
-      "name": "constant.character.escape.brace.glugent"
+      "name": "meta.literal-brace.glugent"
     },
     "if-open": {
       "match": "(\\{-?)\\s*(if)\\s+([\\w.()&|!\\s-]+?)\\s*(\\{)",
@@ -60,7 +60,7 @@
           "name": "keyword.control.conditional.glugent"
         },
         "3": {
-          "name": "variable.other.property.glugent"
+          "name": "variable.other.constant.glugent"
         },
         "4": {
           "name": "punctuation.section.block.begin.glugent"
@@ -81,7 +81,7 @@
           "name": "keyword.control.conditional.glugent"
         },
         "4": {
-          "name": "variable.other.property.glugent"
+          "name": "variable.other.constant.glugent"
         },
         "5": {
           "name": "punctuation.section.block.begin.glugent"
@@ -108,7 +108,7 @@
           "name": "punctuation.definition.template-expression.begin.glugent"
         },
         "2": {
-          "name": "variable.other.property.glugent"
+          "name": "variable.other.constant.glugent"
         },
         "3": {
           "name": "punctuation.definition.template-expression.end.glugent"
