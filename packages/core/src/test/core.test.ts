@@ -3,7 +3,7 @@ import assert from "node:assert";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { renderTemplate, scanTemplate, loadProject, compileAgent, validateProject } from "../index";
+import { renderTemplate, scanTemplate, loadProject, compileAgent, compileTarget, validateProject } from "../index";
 
 
 test("render: required, optional, literal braces", () => {
@@ -145,7 +145,7 @@ test("project: build with precedence and suffix resolution", () => {
   fs.writeFileSync(path.join(dir, "p/base/id.ggen.md"), "---\ndefaults:\n  ROLE: dflt\n---\nRole {ROLE} lang {LANG} {EXTRA?}");
   fs.writeFileSync(path.join(dir, "a.agent.ggen.json"), JSON.stringify({ name: "a", props: { ROLE: "agent", LANG: "agent" }, sections: ["id"] }));
   const project = loadProject(path.join(dir, "glugent.config.json"));
-  const res = compileAgent(project, project.agents[0], { overrides: { EXTRA: "!" } });
+  const res = compileTarget(project, project.targets[0], { overrides: { EXTRA: "!" } });
   assert.equal(res.content, "Role agent lang cfg !\n");
   assert.deepEqual(validateProject(project), []);
 });
@@ -157,6 +157,41 @@ test("project: unknown section and missing prop", () => {
   fs.writeFileSync(path.join(dir, "a.agent.ggen.json"), JSON.stringify({ name: "a", sections: ["s", "nope"] }));
   const d = validateProject(loadProject(path.join(dir, "glugent.config.json")));
   assert.equal(d.length, 2);
+});
+
+test("project: .target, .agent and .doc files are all targets", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-"));
+  fs.writeFileSync(path.join(dir, "glugent.config.json"), "{}");
+  fs.writeFileSync(path.join(dir, "s.ggen.md"), "text");
+  for (const kind of ["target", "agent", "doc"]) {
+    fs.writeFileSync(path.join(dir, `${kind}.${kind}.ggen.json`), JSON.stringify({ name: kind, sections: ["s"] }));
+  }
+  const project = loadProject(path.join(dir, "glugent.config.json"));
+  assert.deepEqual(project.targets.map((t) => t.name).sort(), ["agent", "doc", "target"]);
+  assert.equal(compileAgent(project, project.targets[0]).content, "text\n"); // deprecated alias still works
+});
+
+test("project: config `targets` and the deprecated `agents` are merged", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-"));
+  fs.mkdirSync(path.join(dir, "t"));
+  fs.mkdirSync(path.join(dir, "a"));
+  fs.writeFileSync(path.join(dir, "glugent.config.json"), JSON.stringify({ targets: { include: ["t/*.json"] }, agents: { include: ["a/*.json"] } }));
+  fs.writeFileSync(path.join(dir, "s.ggen.md"), "text");
+  fs.writeFileSync(path.join(dir, "t/one.json"), JSON.stringify({ name: "one", sections: ["s"] }));
+  fs.writeFileSync(path.join(dir, "a/two.json"), JSON.stringify({ name: "two", sections: ["s"] }));
+  const project = loadProject(path.join(dir, "glugent.config.json"));
+  assert.deepEqual(project.targets.map((t) => t.name).sort(), ["one", "two"]);
+});
+
+test("project: duplicate target names are reported", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-"));
+  fs.writeFileSync(path.join(dir, "glugent.config.json"), "{}");
+  fs.writeFileSync(path.join(dir, "s.ggen.md"), "text");
+  fs.writeFileSync(path.join(dir, "x.agent.ggen.json"), JSON.stringify({ name: "same", sections: ["s"] }));
+  fs.writeFileSync(path.join(dir, "y.doc.ggen.json"), JSON.stringify({ name: "same", sections: ["s"] }));
+  const d = loadProject(path.join(dir, "glugent.config.json")).diagnostics;
+  assert.equal(d.length, 1);
+  assert.match(d[0].message, /Duplicate target name 'same'/);
 });
 
 test("render: trim markers remove whitespace on the marked side when empty", () => {

@@ -30,6 +30,8 @@ export interface Placeholder {
 
 export interface GlugentConfig {
   sections?: { include?: string[]; exclude?: string[]; root?: string };
+  targets?: { include?: string[]; exclude?: string[] };
+  /** Deprecated alias of `targets`; both are read and merged. */
   agents?: { include?: string[]; exclude?: string[] };
   props?: Props;
   outDir?: string;
@@ -51,7 +53,8 @@ export interface SectionRef {
   props?: Props;
 }
 
-export interface AgentDef {
+/** Something that is built from sections: an agent, a document, anything. */
+export interface Target {
   file: string;
   name: string;
   output?: string;
@@ -59,18 +62,21 @@ export interface AgentDef {
   sections: SectionRef[];
 }
 
+/** @deprecated Use `Target`. */
+export type AgentDef = Target;
+
 export interface Project {
   root: string;
   configFile: string;
   config: GlugentConfig;
   sections: Section[];
-  agents: AgentDef[];
+  targets: Target[];
   /** Problems found while loading (bad JSON, bad frontmatter, template syntax...). */
   diagnostics: Diagnostic[];
 }
 
 export interface BuildResult {
-  agent: AgentDef;
+  target: Target;
   outputFile: string;
   content: string;
   diagnostics: Diagnostic[];

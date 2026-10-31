@@ -1,6 +1,6 @@
 import { Project, Section } from "../types";
 
-/** Finds the section an agent refers to. */
+/** Finds the section a target refers to. */
 export class SectionResolver {
   constructor(private readonly project: Project) {}
 

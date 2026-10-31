@@ -1,5 +1,5 @@
-/** An agent's JSON text, used to point diagnostics at the right entry. */
-export class AgentFile {
+/** A target's JSON text, used to point diagnostics at the right entry. */
+export class TargetFile {
   private readonly lines: string[];
 
   constructor(text: string) {

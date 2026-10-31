@@ -3,14 +3,14 @@ import { Section } from "@anweba/glugent-core";
 import { Feature } from "../feature";
 import { ProjectStore } from "../project-store";
 
-/** Inside a `sections` list of an agent file: suggests the project's section ids. */
+/** Inside a `sections` list of a target file: suggests the project's section ids. */
 const SECTION_POSITION = /(?:"use"\s*:\s*"|^\s*"|[\[,]\s*")[^"]*$/;
 
 export class SectionCompletion implements Feature, vscode.CompletionItemProvider {
   constructor(private readonly store: ProjectStore) {}
 
   register(): vscode.Disposable[] {
-    return [vscode.languages.registerCompletionItemProvider({ pattern: "**/*.agent.ggen.json" }, this, '"')];
+    return [vscode.languages.registerCompletionItemProvider({ pattern: "**/*.{target,agent,doc}.ggen.json" }, this, '"')];
   }
 
   provideCompletionItems(doc: vscode.TextDocument, pos: vscode.Position): vscode.CompletionItem[] | undefined {

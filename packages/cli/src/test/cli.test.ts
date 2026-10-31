@@ -41,7 +41,7 @@ test("fails without a config", () => {
   assert.match(r.err, /glugent\.config\.json not found/);
 });
 
-test("list shows agents and sections", () => {
+test("list shows targets and sections", () => {
   const dir = project({ "s.ggen.md": "hi", "a.agent.ggen.json": agent("alpha", ["s"]) });
   const r = run(dir, "list");
   assert.equal(r.code, 0);
@@ -49,7 +49,7 @@ test("list shows agents and sections", () => {
   assert.match(r.out, /^ {2}s$/m);
 });
 
-test("build writes the agent, --set overrides props, --dry-run writes nothing", () => {
+test("build writes the target, --set overrides props, --dry-run writes nothing", () => {
   const dir = project({ "s.ggen.md": "Hello {NAME}!{ if LOUD {!!} }", "a.agent.ggen.json": agent("alpha", ["s"]) });
   const dry = run(dir, "build", "--dry-run", "--set", "NAME=Bob");
   assert.equal(dry.code, 0);
@@ -72,9 +72,9 @@ test("build fails on a missing prop and writes nothing", () => {
   assert.equal(fs.existsSync(path.join(dir, "dist")), false);
 });
 
-test("build rejects an unknown agent and a bad --set", () => {
+test("build rejects an unknown target and a bad --set", () => {
   const dir = project({ "s.ggen.md": "x", "a.agent.ggen.json": agent("alpha", ["s"]) });
-  assert.match(run(dir, "build", "ghost").err, /unknown agent 'ghost'/);
+  assert.match(run(dir, "build", "ghost").err, /unknown target 'ghost'/);
   assert.match(run(dir, "build", "--set", "oops").err, /--set expects KEY=VALUE/);
 });
 

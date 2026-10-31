@@ -1,35 +1,5 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Glugent agent definition",
-  "type": "object",
-  "required": ["name", "sections"],
-  "properties": {
-    "$schema": { "type": "string" },
-    "name": { "type": "string", "description": "Agent name. Used for `glugent build <name>` and the default output file name." },
-    "output": { "type": "string", "description": "Output file path, relative to the config file. Default: <outDir>/<name>.md" },
-    "props": {
-      "type": "object",
-      "description": "Props applied to every section of this agent.",
-      "additionalProperties": { "type": ["string", "number", "boolean"] }
-    },
-    "sections": {
-      "type": "array",
-      "description": "Sections to glue together, in order.",
-      "items": {
-        "oneOf": [
-          { "type": "string", "description": "Section id (path without extension, or a unique path suffix)." },
-          {
-            "type": "object",
-            "required": ["use"],
-            "properties": {
-              "use": { "type": "string", "description": "Section id." },
-              "props": { "type": "object", "additionalProperties": { "type": ["string", "number", "boolean"] } }
-            },
-            "additionalProperties": false
-          }
-        ]
-      }
-    }
-  },
-  "additionalProperties": false
+  "title": "Glugent agent definition (alias of the target schema)",
+  "$ref": "target.schema.json"
 }

@@ -1,8 +1,8 @@
 import { Diagnostic, Project } from "../types";
-import { compileAgent } from "./agent-compiler";
+import { compileTarget } from "./target-compiler";
 import { BuildOptions } from "./options";
 
-/** Project-wide validation: load problems plus a dry-run build of every agent. */
+/** Project-wide validation: load problems plus a dry-run build of every target. */
 export class ProjectValidator {
   private readonly found: Diagnostic[];
 
@@ -14,13 +14,13 @@ export class ProjectValidator {
   }
 
   validate(): Diagnostic[] {
-    for (const agent of this.project.agents) {
-      compileAgent(this.project, agent, this.options).diagnostics.forEach((d) => this.addOnce(d));
+    for (const target of this.project.targets) {
+      compileTarget(this.project, target, this.options).diagnostics.forEach((d) => this.addOnce(d));
     }
     return this.found;
   }
 
-  /** The same problem reported by several agents is listed once. */
+  /** The same problem reported by several targets is listed once. */
   private addOnce(d: Diagnostic): void {
     const duplicate = this.found.some((f) => f.file === d.file && f.message === d.message && f.line === d.line);
     if (!duplicate) this.found.push(d);
