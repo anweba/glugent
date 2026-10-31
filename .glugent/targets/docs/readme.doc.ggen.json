@@ -1,0 +1,7 @@
+{
+  "name": "readme",
+  "output": "README.md",
+  "sections": [
+    "docs/readme"
+  ]
+}

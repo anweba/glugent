@@ -1,5 +1,0 @@
----
-description: CONTRIBUTING title
----
-# Contributing
-

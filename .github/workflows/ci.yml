@@ -20,7 +20,7 @@ jobs:
       # The same checks as `npm run verify`, which the pre-push hook runs; keep the two in step.
       - run: npm run build
       - run: npm test
-      # README.md and CONTRIBUTING.md are built from glugent-agents (npm run docs:build); fail if they were edited by hand.
+      # README.md and CONTRIBUTING.md are built from .glugent (npm run docs:build); fail if they were edited by hand.
       - run: npm run docs:check
       # Each example's output/ is committed so it can be read on GitHub; fail if it is stale,
       # missing, or has files no target writes any more (fix with npm run examples:build).
