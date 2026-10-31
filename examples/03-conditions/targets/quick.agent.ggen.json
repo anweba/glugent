@@ -1,0 +1,11 @@
+{
+  "name": "quick",
+  "props": {
+    "TICKET_URL": "",
+    "TYPESCRIPT": false,
+    "TESTS": false,
+    "DOCS": true,
+    "DRAFT": true
+  },
+  "sections": ["workflow"]
+}

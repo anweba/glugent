@@ -10,7 +10,8 @@ packages/
   cli/      glugent               – thin wrapper: `glugent build|validate|list`
   vscode/   glugent-vscode – thin wrapper: highlighting, diagnostics, completion, hover, build commands
   schemas/  JSON Schemas for glugent.config.json and target files
-examples/basic/
+examples/   numbered example projects (01-hello-agent … 09-team), each with its committed output/
+scripts/    run-glugent-on-examples.mjs: validate or build every example
 ```
 
 The CLI and the extension both call `@anweba/glugent-core`; nothing is implemented twice. In the CLI, `cli.ts` (the `Cli` class) wires `Arguments`, `Reporter` and one `Command` subclass per subcommand in `commands/`; add a command by subclassing `Command` and registering it in `COMMANDS`. Inside `@anweba/glugent-core` (`packages/core/src`), each folder is one stage, and the public functions (`loadProject`, `compileAgent`, `validateProject`, `renderTemplate`, `scanTemplate`) are thin wrappers over the classes:
@@ -36,19 +37,23 @@ Extension tests (`src/test`) run in plain Node against an in-memory stand-in for
 ```bash
 npm install && npm run build
 npm test                      # builds, then tests core, the CLI and the extension
-cd examples/basic
+cd examples/02-props
 node ../../packages/cli/bin/glugent.js validate
-node ../../packages/cli/bin/glugent.js build --set ADDITIONAL_INSTRUCTIONS="Be terse."
+node ../../packages/cli/bin/glugent.js build --set TONE=formal
 ```
 
-### Trying it on the example project
+### Trying it on the examples
+
+`examples/` holds numbered example projects, from the smallest (`01-hello-agent`) to a full team setup (`09-team`); each has a `README.md` and its committed build in `output/`.
 
 ```bash
-npm run example:validate     # the CLI against examples/basic
-npm run example:build        # writes examples/basic/dist/agents/*.md
+npm run examples:validate    # the CLI against every example
+npm run examples:build       # rebuilds every examples/*/output
 ```
 
-To try the extension, open this repo in VS Code and run **Extension: try on examples/basic** (F5). It builds everything and opens a second window on `examples/basic` with the extension loaded: open a `.ggen.md` file for highlighting, hover and completion (type `{`), break something to see diagnostics in the Problems panel, and use the *Glugent:* commands from the command palette.
+CI rebuilds the examples and fails if a committed `output/` differs, so after changing an example, or anything that changes what it renders, run `npm run examples:build` and commit the result.
+
+To try the extension, open this repo in VS Code and run **Extension: try on examples/09-team** (F5). It builds everything and opens a second window on `examples/09-team` with the extension loaded: open a `.ggen.md` file for highlighting, hover and completion (type `{`), break something to see diagnostics in the Problems panel, and use the *Glugent:* commands from the command palette.
 
 ### VS Code extension
 

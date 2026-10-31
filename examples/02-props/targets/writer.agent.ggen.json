@@ -1,0 +1,9 @@
+{
+  "name": "writer",
+  "props": { "AGENT_NAME": "Writer", "PROJECT": "Draft name", "TONE": "friendly", "LENGTH": "short" },
+  "sections": [
+    "identity",
+    { "use": "style", "props": { "LENGTH": "very short" } },
+    "stuck"
+  ]
+}

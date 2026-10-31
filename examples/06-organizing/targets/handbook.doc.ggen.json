@@ -1,0 +1,6 @@
+{
+  "$schema": "../../../packages/schemas/target.schema.json",
+  "name": "handbook",
+  "output": "output/HANDBOOK.md",
+  "sections": ["handbook-intro", "rules", "reviewer", "writer"]
+}

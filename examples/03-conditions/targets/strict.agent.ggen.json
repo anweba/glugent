@@ -1,0 +1,12 @@
+{
+  "name": "strict",
+  "props": {
+    "TICKET_URL": "https://tracker.example.com/ACME-42",
+    "TYPESCRIPT": true,
+    "TESTS": true,
+    "CI": true,
+    "LINT": true,
+    "CHANGELOG": true
+  },
+  "sections": ["workflow"]
+}

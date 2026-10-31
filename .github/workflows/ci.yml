@@ -22,6 +22,15 @@ jobs:
       # README.md and CONTRIBUTING.md are built from glugent-agents (npm run docs:build); fail if they were edited by hand.
       - run: npm run docs:build
       - run: git diff --exit-code README.md CONTRIBUTING.md
+      # Each example's output/ is committed so it can be read on GitHub; fail if it is stale,
+      # missing, or has files no target writes any more.
+      - run: npm run examples:build
+      - run: |
+          if [ -n "$(git status --porcelain examples)" ]; then
+            echo "::error::examples/*/output is out of date; run npm run examples:build and commit the result"
+            git status --short examples
+            exit 1
+          fi
       # Pull requests that touch a package need a changeset (npm run changeset).
       # The Version Packages PR is exempt: it consumes the changesets.
       - if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')

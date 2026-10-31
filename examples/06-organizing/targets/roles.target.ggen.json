@@ -1,0 +1,5 @@
+{
+  "$schema": "../../../packages/schemas/target.schema.json",
+  "name": "roles",
+  "sections": ["roles/reviewer", "roles/writer"]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "empty-plain",
+  "props": { "WEEK": 42 },
+  "sections": ["update-plain"]
+}

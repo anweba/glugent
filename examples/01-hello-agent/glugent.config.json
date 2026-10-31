@@ -1,0 +1,4 @@
+{
+  "props": { "PROJECT": "Acme Shop" },
+  "outDir": "output"
+}
