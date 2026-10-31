@@ -11,7 +11,8 @@ packages/
   vscode/   glugent-vscode – thin wrapper: highlighting, diagnostics, completion, hover, build commands
   schemas/  JSON Schemas for glugent.config.json and target files
 examples/   numbered example projects (01-hello-agent … 09-team), each with its committed output/
-scripts/    run-glugent-on-examples.mjs: validate or build every example
+scripts/    run-glugent-on-examples.mjs: validate, build or check every example
+.githooks/  Git hooks, turned on by npm install: pre-push runs the CI checks, the others warn about stale agents
 ```
 
 The CLI and the extension both call `@anweba/glugent-core`; nothing is implemented twice. In the CLI, `cli.ts` (the `Cli` class) wires `Arguments`, `Reporter` and one `Command` subclass per subcommand in `commands/`; add a command by subclassing `Command` and registering it in `COMMANDS`. Inside `@anweba/glugent-core` (`packages/core/src`), each folder is one stage, and the public functions (`loadProject`, `compileAgent`, `validateProject`, `renderTemplate`, `scanTemplate`) are thin wrappers over the classes:
@@ -49,9 +50,23 @@ node ../../packages/cli/bin/glugent.js build --set TONE=formal
 ```bash
 npm run examples:validate    # the CLI against every example
 npm run examples:build       # rebuilds every examples/*/output
+npm run examples:check       # writes nothing; fails if an output is stale, missing or left over
 ```
 
-CI rebuilds the examples and fails if a committed `output/` differs, so after changing an example, or anything that changes what it renders, run `npm run examples:build` and commit the result.
+CI checks the examples and fails if a committed `output/` differs, so after changing an example, or anything that changes what it renders, run `npm run examples:build` and commit the result.
+
+### Checks and Git hooks
+
+`npm run verify` runs what CI runs: build, tests, `docs:check` and `examples:check`. `npm run targets:check` tells you whether the built agents in `agents/` match the sources.
+
+`npm install` turns on the hooks in `.githooks/` (`git config core.hooksPath .githooks`):
+
+| Hook | Does |
+|---|---|
+| `pre-push` | runs `npm run verify`, then checks for a changeset against `origin/main`, as CI does; a failure stops the push |
+| `post-checkout`, `post-merge`, `post-rewrite` | after switching or creating a branch, a pull or merge, or a rebase: warns when `agents/` or the generated docs do not match the sources. It never rebuilds or blocks; rebuild with `npm run targets:build` |
+
+The checks run on the working tree, not on exactly what is pushed, so CI stays the final word. Skip the pre-push hook once with `git push --no-verify`.
 
 To try the extension, open this repo in VS Code and run **Extension: try on examples/09-team** (F5). It builds everything and opens a second window on `examples/09-team` with the extension loaded: open a `.ggen.md` file for highlighting, hover and completion (type `{`), break something to see diagnostics in the Problems panel, and use the *Glugent:* commands from the command palette.
 

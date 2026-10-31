@@ -1,13 +1,15 @@
-// Runs the local CLI on every example: node scripts/run-glugent-on-examples.mjs <validate|build>
+// Runs the local CLI on every example: node scripts/run-glugent-on-examples.mjs <validate|build|check>
 // `build` empties each example's outDir first, so output a target no longer
-// writes shows up as deleted rather than lingering.
+// writes is removed. `check` writes nothing: it runs `glugent build --check` and
+// also fails on files in the outDir that no target writes any more.
 import { spawnSync } from "node:child_process";
-import { readdirSync, readFileSync, rmSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { readdirSync, readFileSync, rmSync, existsSync, statSync } from "node:fs";
+import { createRequire } from "node:module";
+import { join, relative, resolve } from "node:path";
 
 const command = process.argv[2];
-if (command !== "validate" && command !== "build") {
-  console.error("usage: node scripts/run-glugent-on-examples.mjs <validate|build>");
+if (!["validate", "build", "check"].includes(command)) {
+  console.error("usage: node scripts/run-glugent-on-examples.mjs <validate|build|check>");
   process.exit(2);
 }
 
@@ -16,11 +18,24 @@ let failed = false;
 for (const name of readdirSync("examples").sort()) {
   const config = join("examples", name, "glugent.config.json");
   if (!existsSync(config)) continue;
-  if (command === "build") {
-    const outDir = JSON.parse(readFileSync(config, "utf8")).outDir ?? "dist/agents";
-    rmSync(join("examples", name, outDir), { recursive: true, force: true });
-  }
+  const outDir = join("examples", name, JSON.parse(readFileSync(config, "utf8")).outDir ?? "dist/agents");
+  if (command === "build") rmSync(outDir, { recursive: true, force: true });
   console.log(`== ${name}`);
-  if (spawnSync("node", [cli, command, "-c", config], { stdio: "inherit" }).status !== 0) failed = true;
+  const args = command === "check" ? ["build", "--check", "-c", config] : [command, "-c", config];
+  if (spawnSync("node", [cli, ...args], { stdio: "inherit" }).status !== 0) failed = true;
+  if (command === "check" && leftovers(config, outDir)) failed = true;
 }
 if (failed) process.exit(1);
+
+/** Reports files in `outDir` that none of the example's targets writes; true if there are any. */
+function leftovers(config, outDir) {
+  if (!existsSync(outDir)) return false;
+  const { loadProject, outputPathFor } = createRequire(import.meta.url)("../packages/core/dist/index.js");
+  const project = loadProject(resolve(config));
+  const written = new Set(project.targets.map((target) => outputPathFor(project, target)));
+  const extra = readdirSync(outDir, { recursive: true })
+    .map((file) => resolve(outDir, file))
+    .filter((file) => statSync(file).isFile() && !written.has(file));
+  for (const file of extra) console.error(`✗ ${relative(".", file)} (no target writes it)`);
+  return extra.length > 0;
+}

@@ -1,0 +1,4 @@
+#!/bin/sh
+# After a rebase, including git pull --rebase ($1 is "rebase"; "amend" changes nothing here).
+[ "$1" = "rebase" ] && "$(dirname "$0")/check-agents"
+exit 0

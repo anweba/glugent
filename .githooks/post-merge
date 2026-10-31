@@ -1,0 +1,4 @@
+#!/bin/sh
+# After a merge, including git pull.
+"$(dirname "$0")/check-agents"
+exit 0
