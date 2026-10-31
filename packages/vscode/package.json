@@ -4,7 +4,7 @@
   "displayName": "Glugent",
   "description": "Syntax highlighting, diagnostics, completion and build commands for Glugent sections and targets.",
   "license": "MIT",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/anweba/glugent.git",
@@ -102,7 +102,7 @@
     "test": "node -e \"require('fs').rmSync('out-test',{recursive:true,force:true})\" && tsc -p tsconfig.test.json && node --require ./out-test/test/setup.js --test out-test/test/*.test.js"
   },
   "devDependencies": {
-    "@anweba/glugent-core": "0.4.0",
+    "@anweba/glugent-core": "0.4.1",
     "@types/vscode": "^1.85.0",
     "esbuild": "^0.24.0"
   }
