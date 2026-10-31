@@ -1,13 +1,13 @@
 import * as path from "path";
 import fg from "fast-glob";
 import { diag } from "../diagnostics";
-import { AgentDef, Diagnostic, GlugentConfig, Project, Section } from "../types";
-import { AgentParser } from "./agent-parser";
-import { ALWAYS_IGNORE, DEFAULT_AGENT_INCLUDE, DEFAULT_SECTION_INCLUDE } from "./constants";
+import { Target, Diagnostic, GlugentConfig, Project, Section } from "../types";
+import { TargetParser } from "./target-parser";
+import { ALWAYS_IGNORE, DEFAULT_TARGET_INCLUDE, DEFAULT_SECTION_INCLUDE } from "./constants";
 import { LoadOptions, ReadFile, readFromDisk } from "./file-reader";
 import { SectionParser } from "./section-parser";
 
-/** Reads glugent.config.json and every section and agent file it points at. */
+/** Reads glugent.config.json and every section and target file it points at. */
 export class ProjectLoader {
   private readonly configFile: string;
   private readonly root: string;
@@ -24,14 +24,14 @@ export class ProjectLoader {
   load(): Project {
     this.readConfig();
     const sections = this.loadSections();
-    const agents = this.loadAgents();
-    this.reportDuplicateAgents(agents);
+    const targets = this.loadTargets();
+    this.reportDuplicateTargets(targets);
     return {
       root: this.root,
       configFile: this.configFile,
       config: this.config,
       sections,
-      agents,
+      targets,
       diagnostics: this.diagnostics,
     };
   }
@@ -64,23 +64,26 @@ export class ProjectLoader {
     return sections;
   }
 
-  private loadAgents(): AgentDef[] {
-    const agents: AgentDef[] = [];
-    for (const file of this.glob(this.config.agents?.include ?? DEFAULT_AGENT_INCLUDE, this.config.agents?.exclude)) {
-      const parsed = new AgentParser(file, this.read(file)).parse();
+  private loadTargets(): Target[] {
+    const { targets, agents } = this.config;
+    const include = [...(targets?.include ?? []), ...(agents?.include ?? [])];
+    const exclude = [...(targets?.exclude ?? []), ...(agents?.exclude ?? [])];
+    const found: Target[] = [];
+    for (const file of this.glob(include.length ? include : DEFAULT_TARGET_INCLUDE, exclude)) {
+      const parsed = new TargetParser(file, this.read(file)).parse();
       this.diagnostics.push(...parsed.diagnostics);
-      if (parsed.agent) agents.push(parsed.agent);
+      if (parsed.target) found.push(parsed.target);
     }
-    return agents;
+    return found;
   }
 
-  private reportDuplicateAgents(agents: AgentDef[]): void {
+  private reportDuplicateTargets(targets: Target[]): void {
     const fileByName = new Map<string, string>();
-    for (const agent of agents) {
-      if (fileByName.has(agent.name)) {
-        this.diagnostics.push(diag(agent.file, `Duplicate agent name '${agent.name}' (also ${fileByName.get(agent.name)})`));
+    for (const target of targets) {
+      if (fileByName.has(target.name)) {
+        this.diagnostics.push(diag(target.file, `Duplicate target name '${target.name}' (also ${fileByName.get(target.name)})`));
       } else {
-        fileByName.set(agent.name, agent.file);
+        fileByName.set(target.name, target.file);
       }
     }
   }

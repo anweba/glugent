@@ -1,10 +1,10 @@
 import { diag, isProps } from "../diagnostics";
-import { AgentDef, Diagnostic, SectionRef } from "../types";
+import { Target, Diagnostic, SectionRef } from "../types";
 
 const PROPS_HINT = "must be a map of string/number/boolean";
 
-/** Parses a `*.agent.ggen.json` file into an AgentDef, reporting every problem found. */
-export class AgentParser {
+/** Parses a target file (`*.target.ggen.json`, `*.agent.ggen.json` or `*.doc.ggen.json`) into a Target, reporting every problem found. */
+export class TargetParser {
   private readonly diagnostics: Diagnostic[] = [];
 
   constructor(
@@ -12,7 +12,7 @@ export class AgentParser {
     private readonly text: string,
   ) {}
 
-  parse(): { agent?: AgentDef; diagnostics: Diagnostic[] } {
+  parse(): { target?: Target; diagnostics: Diagnostic[] } {
     const data = this.readJson();
     if (data === undefined) return { diagnostics: this.diagnostics };
 
@@ -20,14 +20,14 @@ export class AgentParser {
     if (this.diagnostics.length) return { diagnostics: this.diagnostics };
 
     const sections = (data.sections as unknown[]).flatMap((entry) => this.sectionRef(entry));
-    const agent: AgentDef = {
+    const target: Target = {
       file: this.file,
       name: data.name,
       output: typeof data.output === "string" ? data.output : undefined,
       props: data.props,
       sections,
     };
-    return { agent, diagnostics: this.diagnostics };
+    return { target, diagnostics: this.diagnostics };
   }
 
   private readJson(): any | undefined {
@@ -39,15 +39,15 @@ export class AgentParser {
       return;
     }
     if (!data || typeof data !== "object" || Array.isArray(data)) {
-      this.fail("Agent definition must be a JSON object");
+      this.fail("Target definition must be a JSON object");
       return;
     }
     return data;
   }
 
   private checkShape(data: any): void {
-    if (typeof data.name !== "string" || !data.name) this.fail("Agent needs a string 'name'");
-    if (!Array.isArray(data.sections)) this.fail("Agent needs a 'sections' array");
+    if (typeof data.name !== "string" || !data.name) this.fail("Target needs a string 'name'");
+    if (!Array.isArray(data.sections)) this.fail("Target needs a 'sections' array");
     if (data.props !== undefined && !isProps(data.props)) this.fail(`'props' ${PROPS_HINT}`);
   }
 
@@ -67,6 +67,9 @@ export class AgentParser {
   }
 }
 
-export function parseAgent(file: string, text: string): { agent?: AgentDef; diagnostics: Diagnostic[] } {
-  return new AgentParser(file, text).parse();
+export function parseTarget(file: string, text: string): { target?: Target; diagnostics: Diagnostic[] } {
+  return new TargetParser(file, text).parse();
 }
+
+/** @deprecated Use `parseTarget`. */
+export const parseAgent = parseTarget;

@@ -25,12 +25,12 @@ test("hover on a required prop", () => {
   assert.match(text(h), /\*\*NAME\*\* — required prop/);
 });
 
-test("hover shows the default, section default, config value and agents", () => {
+test("hover shows the default, section default, config value and targets", () => {
   const { file, doc, hover } = setup();
   assert.match(text(hover.provideHover(doc, positionOf(file, "NOTE"))!), /When missing: `n\/a`/);
   const tone = text(hover.provideHover(doc, positionOf(file, "TONE} for"))!);
   assert.match(tone, /Section default: `warm`/);
-  assert.match(tone, /Set by agents: `writer`/);
+  assert.match(tone, /Set by targets: `writer`/);
   assert.match(text(hover.provideHover(doc, positionOf(file, "PROJECT"))!), /Config value: `Acme`/);
 });
 

@@ -4,7 +4,7 @@ import { CliError } from "./errors";
 /** The parsed command line: `glugent <command> [names...] [flags]`. */
 export class Arguments {
   command?: string;
-  /** Positional arguments after the command (e.g. agent names). */
+  /** Positional arguments after the command (e.g. target names). */
   names: string[] = [];
   /** `--set KEY=VALUE` overrides; they win over every other prop layer. */
   overrides: Props = {};

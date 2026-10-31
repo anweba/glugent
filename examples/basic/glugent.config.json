@@ -1,7 +1,7 @@
 {
   "$schema": "../../packages/schemas/glugent-config.schema.json",
   "sections": { "include": ["glugent/**/*.ggen.md"] },
-  "agents": { "include": ["agents/**/*.agent.ggen.json"] },
+  "targets": { "include": ["agents/**/*.agent.ggen.json"] },
   "props": { "PROJECT": "Acme Storefront" },
   "outDir": "dist/agents"
 }

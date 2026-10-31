@@ -2,7 +2,7 @@
   "name": "glugent-vscode",
   "private": true,
   "displayName": "Glugent",
-  "description": "Syntax highlighting, diagnostics, completion and build commands for Glugent agent sections.",
+  "description": "Syntax highlighting, diagnostics, completion and build commands for Glugent sections and targets.",
   "version": "0.1.2",
   "repository": {
     "type": "git",
@@ -72,19 +72,21 @@
       },
       {
         "fileMatch": [
-          "*.agent.ggen.json"
+          "*.target.ggen.json",
+          "*.agent.ggen.json",
+          "*.doc.ggen.json"
         ],
-        "url": "./schemas/agent.schema.json"
+        "url": "./schemas/target.schema.json"
       }
     ],
     "commands": [
       {
         "command": "glugent.buildAll",
-        "title": "Glugent: Build All Agents"
+        "title": "Glugent: Build All Targets"
       },
       {
-        "command": "glugent.buildAgent",
-        "title": "Glugent: Build Agent..."
+        "command": "glugent.buildTarget",
+        "title": "Glugent: Build Target..."
       },
       {
         "command": "glugent.validate",
@@ -93,7 +95,7 @@
     ]
   },
   "scripts": {
-    "copy-schemas": "node -e \"const fs=require('fs');fs.mkdirSync('schemas',{recursive:true});for(const f of ['glugent-config','agent'])fs.copyFileSync('../schemas/'+f+'.schema.json','schemas/'+f+'.schema.json')\"",
+    "copy-schemas": "node -e \"const fs=require('fs');fs.mkdirSync('schemas',{recursive:true});for(const f of ['glugent-config','target'])fs.copyFileSync('../schemas/'+f+'.schema.json','schemas/'+f+'.schema.json')\"",
     "build": "npm run copy-schemas && esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js --sourcemap",
     "package": "npm run build && vsce package --no-dependencies",
     "test": "node -e \"require('fs').rmSync('out-test',{recursive:true,force:true})\" && tsc -p tsconfig.test.json && node --require ./out-test/test/setup.js --test out-test/test/*.test.js"
