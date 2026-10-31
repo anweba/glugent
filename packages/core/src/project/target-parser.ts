@@ -51,12 +51,13 @@ export class TargetParser {
     if (data.props !== undefined && !isProps(data.props)) this.fail(`'props' ${PROPS_HINT}`);
   }
 
-  /** A section entry is `"name"` or `{ "use": "name", "props": {...} }`. */
+  /** A section entry is `"name"` or `{ "use": "name", "props": {...}, "slots": {...} }`. */
   private sectionRef(entry: any): SectionRef[] {
     if (typeof entry === "string") return [{ use: entry }];
     if (entry && typeof entry.use === "string") {
       if (entry.props !== undefined && !isProps(entry.props)) this.fail(`'props' of section '${entry.use}' ${PROPS_HINT}`);
-      return [{ use: entry.use, props: entry.props }];
+      if (entry.slots !== undefined && !isStringMap(entry.slots)) this.fail(`'slots' of section '${entry.use}' must be a map of strings`);
+      return [{ use: entry.use, props: entry.props, slots: entry.slots }];
     }
     this.fail('Each section must be a string or { "use": "..." }');
     return [];
@@ -65,6 +66,10 @@ export class TargetParser {
   private fail(message: string): void {
     this.diagnostics.push(diag(this.file, message));
   }
+}
+
+function isStringMap(value: unknown): value is Record<string, string> {
+  return !!value && typeof value === "object" && !Array.isArray(value) && Object.values(value).every((v) => typeof v === "string");
 }
 
 export function parseTarget(file: string, text: string): { target?: Target; diagnostics: Diagnostic[] } {

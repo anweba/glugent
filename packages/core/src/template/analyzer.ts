@@ -1,7 +1,7 @@
-import { Placeholder } from "../types";
+import { Placeholder, SlotDef } from "../types";
 import { conditionRefs } from "./condition";
 import { LineIndex } from "./line-index";
-import { Piece } from "./pieces";
+import { Piece, SlotPiece } from "./pieces";
 import { TemplateScanner } from "./scanner";
 
 export interface TemplateError {
@@ -12,10 +12,11 @@ export interface TemplateError {
   length: number;
 }
 
-/** Lists the placeholders and syntax errors of a template, with positions for editors. */
+/** Lists the placeholders, slots and syntax errors of a template, with positions for editors. */
 export class TemplateAnalyzer {
   private readonly index: LineIndex;
   private readonly placeholders: Placeholder[] = [];
+  private readonly slots: SlotDef[] = [];
   private readonly errors: TemplateError[] = [];
 
   constructor(
@@ -25,9 +26,9 @@ export class TemplateAnalyzer {
     this.index = new LineIndex(body);
   }
 
-  analyze(): { placeholders: Placeholder[]; errors: TemplateError[] } {
+  analyze(): { placeholders: Placeholder[]; slots: SlotDef[]; errors: TemplateError[] } {
     this.visit(new TemplateScanner(this.body).scan().pieces);
-    return { placeholders: this.placeholders, errors: this.errors };
+    return { placeholders: this.placeholders, slots: this.slots, errors: this.errors };
   }
 
   private visit(pieces: Piece[]): void {
@@ -36,8 +37,7 @@ export class TemplateAnalyzer {
         const { name, optional, default: fallback } = piece;
         this.placeholders.push({ name, optional, default: fallback, ...this.locate(piece.start, piece.end) });
       } else if (piece.kind === "error") {
-        const { endLine, endColumn, ...position } = this.locate(piece.start, piece.end);
-        this.errors.push({ message: piece.message, ...position });
+        this.error(piece.message, piece.start, piece.end);
       } else if (piece.kind === "if") {
         for (const branch of piece.branches) {
           const refs = branch.condition ? conditionRefs(branch.condition) : [];
@@ -46,8 +46,26 @@ export class TemplateAnalyzer {
           }
           this.visit(branch.children);
         }
+      } else if (piece.kind === "ref") {
+        for (const fill of piece.fills ?? []) this.visit(fill.children);
+      } else if (piece.kind === "slot") {
+        this.slot(piece);
       }
     }
+  }
+
+  /** Slot names are unique within a section, even across `if` branches. */
+  private slot(piece: SlotPiece): void {
+    if (this.slots.some((s) => s.name === piece.name)) {
+      return this.error(`Slot '${piece.name}' is defined twice`, piece.start, piece.end);
+    }
+    const { line, column, length } = this.locate(piece.start, piece.end);
+    this.slots.push({ name: piece.name, optional: piece.optional, line, column, length });
+  }
+
+  private error(message: string, start: number, end: number): void {
+    const { endLine, endColumn, ...position } = this.locate(start, end);
+    this.errors.push({ message, ...position });
   }
 
   private locate(start: number, end: number) {
