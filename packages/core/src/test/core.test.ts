@@ -363,3 +363,67 @@ test("project: slot problems are reported", () => {
     "t.agent.ggen.json:0 In slot 'default' of section 'card': required prop 'NEED' has no value",
   ]);
 });
+
+test("scan: props passed to a REF", () => {
+  const err = (t: string) => scanTemplate(t).errors.map((e) => e.message);
+  assert.deepEqual(err('{ REF a | X="1" Y=true Z=-2.5 W=false } { REF-OVERRIDE BEGIN b | H="{TITLE} x" }{ REF END b }'), []);
+  assert.deepEqual(scanTemplate('{ REF a | HEAD="{TITLE} test" }').placeholders.map((p) => p.name), ["TITLE"]);
+  assert.deepEqual(scanTemplate('{ REF a | HEAD="{{literal}}" }').placeholders, []);
+  assert.match(err("{ REF a | X=maybe }")[0], /Malformed props on 'REF'/);
+  assert.match(err('{ REF a | X="1",Y="2" }')[0], /Malformed props on 'REF'/);
+  assert.match(err('{ REF a | X="1" X="2" }')[0], /Prop 'X' is passed twice/);
+  assert.match(err('{ REF a | X="{oops" }')[0], /In prop 'X': Unexpected '\{'/);
+  assert.deepEqual(scanTemplate("{REF} {REF?}").placeholders.map((p) => p.name), ["REF", "REF"]);
+});
+
+test("render: REF props are rendered with the including template's props", () => {
+  const seen: unknown[] = [];
+  const renderRef = (ref: { props?: unknown }) => {
+    seen.push(ref.props);
+    return "";
+  };
+  renderTemplate('{ REF a | HEAD="{TITLE} test" N=3 B=false OPT="{X?}" }\n{ REF b }', { TITLE: "Title" }, { renderRef });
+  assert.deepEqual(seen, [{ HEAD: "Title test", N: 3, B: false, OPT: "" }, undefined]);
+  assert.deepEqual(renderTemplate('{ REF a | HEAD="{NOPE}" }', {}, { renderRef }).missing.map((m) => m.name), ["NOPE"]);
+});
+
+test("project: REF props beat the section's own and inherited props, config and CLI beat them", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-"));
+  fs.writeFileSync(path.join(dir, "glugent.config.json"), JSON.stringify({ props: { CFG: "cfg" } }));
+  fs.writeFileSync(path.join(dir, "h.ggen.md"), "---\ndefaults:\n  HEAD: own\n---\n{HEAD} {LEVEL} {CFG}");
+  fs.writeFileSync(path.join(dir, "card.ggen.md"), "## {HEAD}\n{ # }");
+  fs.writeFileSync(path.join(dir, "a.ggen.md"), [
+    "---", "defaults:", "  HEAD: from-a", "  TITLE: Title", "---",
+    '{ REF h | HEAD="{TITLE} test" }',
+    "{ REF-OVERRIDE h }",
+    '{ REF-OVERRIDE h | HEAD="passed" }',
+    '{ REF h | CFG="ref" LEVEL=3 }',
+    '{ REF BEGIN card | HEAD="card head" }', "body by {TITLE}", "{ REF END card }",
+  ].join("\n"));
+  fs.writeFileSync(path.join(dir, "t.agent.ggen.json"), JSON.stringify({ name: "t", props: { LEVEL: 2 }, sections: ["a"] }));
+  const project = loadProject(path.join(dir, "glugent.config.json"));
+  assert.deepEqual(project.diagnostics, []);
+  const res = compileTarget(project, project.targets[0]);
+  assert.deepEqual(res.diagnostics, []);
+  assert.equal(res.content, [
+    "Title test 2 cfg", // passed, rendered with a's props; target LEVEL
+    "from-a 2 cfg", //     REF-OVERRIDE: a's HEAD
+    "passed 2 cfg", //     passed beats inherited
+    "own 3 cfg", //        passed LEVEL beats the target's; config beats passed CFG
+    "## card head", "body by Title", "",
+  ].join("\n"));
+  const cli = compileTarget(project, project.targets[0], { overrides: { HEAD: "cli" } }).content;
+  assert.equal(cli.split("\n").filter((l) => l.includes("cli")).length, 5); // --set beats everything
+});
+
+test("project: a missing prop in a REF value is the including section's", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-"));
+  fs.writeFileSync(path.join(dir, "glugent.config.json"), "{}");
+  fs.writeFileSync(path.join(dir, "h.ggen.md"), "# {HEAD}");
+  fs.writeFileSync(path.join(dir, "a.ggen.md"), '{ REF h | HEAD="{TITLE}" }');
+  fs.writeFileSync(path.join(dir, "t.agent.ggen.json"), JSON.stringify({ name: "t", sections: ["a"] }));
+  const project = loadProject(path.join(dir, "glugent.config.json"));
+  assert.deepEqual(compileTarget(project, project.targets[0]).diagnostics.map((d) => d.message), [
+    "Target 't': required prop 'TITLE' of section 'a' has no value",
+  ]);
+});

@@ -1,7 +1,7 @@
 import { Placeholder, SlotDef } from "../types";
 import { conditionRefs } from "./condition";
 import { LineIndex } from "./line-index";
-import { Piece, SlotPiece } from "./pieces";
+import { Piece, RefProp, SlotPiece } from "./pieces";
 import { TemplateScanner } from "./scanner";
 
 export interface TemplateError {
@@ -47,11 +47,25 @@ export class TemplateAnalyzer {
           this.visit(branch.children);
         }
       } else if (piece.kind === "ref") {
+        for (const prop of piece.props ?? []) this.refProp(prop);
         for (const fill of piece.fills ?? []) this.visit(fill.children);
       } else if (piece.kind === "slot") {
         this.slot(piece);
       }
     }
+  }
+
+  /**
+   * A quoted prop value passed to a REF is a template of its own, using this section's
+   * props. Its placeholders and errors are reported at the `NAME="..."`.
+   */
+  private refProp(prop: RefProp): void {
+    if (prop.template === undefined) return;
+    const inner = new TemplateAnalyzer(prop.template).analyze();
+    const at = this.locate(prop.start, prop.end);
+    for (const p of inner.placeholders) this.placeholders.push({ ...p, ...at });
+    for (const e of inner.errors) this.error(`In prop '${prop.name}': ${e.message}`, prop.start, prop.end);
+    if (inner.slots.length) this.error(`In prop '${prop.name}': slots can only be defined in a section`, prop.start, prop.end);
   }
 
   /** Slot names are unique within a section, even across `if` branches. */

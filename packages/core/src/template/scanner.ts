@@ -1,9 +1,9 @@
 import { ConditionParser } from "./condition";
 import {
-  BRACE, DEFAULT_SLOT, ELSE, IF_CLOSE, IF_OPEN, IF_START, PLACEHOLDER, REF, REF_BEGIN, REF_END, REF_START,
+  BRACE, DEFAULT_SLOT, ELSE, IF_CLOSE, IF_OPEN, IF_START, PLACEHOLDER, REF, REF_BEGIN, REF_END, REF_PROP, REF_START,
   SLOT_BEGIN, SLOT_DEF, SLOT_END, SLOT_START, TAG, unquote,
 } from "./grammar";
-import { Branch, Fill, Piece, Scanned } from "./pieces";
+import { Branch, Fill, Piece, RefProp, Scanned } from "./pieces";
 
 /** What the scan of a nested stretch stops at: the end of an `if` branch, a REF block or a SLOT block. */
 type Until = "if" | "ref" | "slot";
@@ -152,7 +152,10 @@ export class TemplateScanner {
     const end = start + tag[0].length;
     const parts = PLACEHOLDER.exec(tag[1]);
     if (!parts) {
-      const message = this.match(REF_START, start)
+      const isRef = !!this.match(REF_START, start);
+      const message = isRef && tag[1].includes("|")
+        ? `Malformed props on 'REF' (expected | NAME="text", NAME=true, NAME=false or NAME=3, separated by spaces)`
+        : isRef
         ? "Malformed 'REF' (expected { REF section/id } or { REF-OVERRIDE section/id })"
         : this.match(SLOT_START, start)
           ? "Malformed 'SLOT' (expected { SLOT BEGIN name } or { SLOT END name })"
@@ -185,13 +188,34 @@ export class TemplateScanner {
 
   // --- section references and slots ---------------------------------------
 
-  /** `{ REF id }` / `{ REF-OVERRIDE id }`. Returns false if none starts here. */
+  /** `{ REF id }` / `{ REF-OVERRIDE id }`, with optional `| NAME=value ...`. Returns false if none starts here. */
   private ref(segment: Segment, start: number): boolean {
     const ref = this.match(REF, start);
     if (!ref) return false;
     const end = start + ref[0].length;
-    segment.add({ kind: "ref", start, end, id: ref[2], override: ref[1] === "REF-OVERRIDE" }, end);
+    const props = this.refProps(segment, start, ref);
+    segment.add({ kind: "ref", start, end, id: ref[2], override: ref[1] === "REF-OVERRIDE", props }, end);
     return true;
+  }
+
+  /** The `| NAME=value ...` of a REF tag (group 3 of `tag`); a name given twice is an error. */
+  private refProps(segment: Segment, start: number, tag: RegExpExecArray): RefProp[] | undefined {
+    const text = tag[3];
+    if (!text) return undefined;
+    const at = start + tag[0].indexOf(text, tag[0].indexOf("|"));
+    const props: RefProp[] = [];
+    for (const m of text.matchAll(REF_PROP)) {
+      const [whole, name, written] = m;
+      const prop: RefProp = { name, start: at + m.index!, end: at + m.index! + whole.length };
+      if (written.startsWith('"')) prop.template = unquote(written);
+      else prop.value = written === "true" ? true : written === "false" ? false : Number(written);
+      if (props.some((p) => p.name === name)) {
+        segment.note({ kind: "error", start: prop.start, end: prop.end, message: `Prop '${name}' is passed twice` });
+      } else {
+        props.push(prop);
+      }
+    }
+    return props;
   }
 
   /** `{ REF BEGIN id } ... { REF END id }`. Returns false if no block starts here. */
@@ -200,6 +224,7 @@ export class TemplateScanner {
     if (!open) return false;
     const [, keyword, id] = open;
     const tagEnd = start + open[0].length;
+    const props = this.refProps(segment, start, open);
     const after = this.scan(tagEnd, "ref");
     const error = (message: string, from = start, to = tagEnd) => segment.note({ kind: "error", start: from, end: to, message });
 
@@ -214,7 +239,7 @@ export class TemplateScanner {
     const fills = after.fills.length ? this.slotBlocksOnly(segment, after) : [{
       name: DEFAULT_SLOT, inherit: false, start, end: after.end, contentStart: tagEnd, contentEnd: after.closeStart, children: after.pieces,
     }];
-    segment.add({ kind: "ref", start, end: after.end, id, override: keyword === "REF-OVERRIDE", fills }, after.end);
+    segment.add({ kind: "ref", start, end: after.end, id, override: keyword === "REF-OVERRIDE", props, fills }, after.end);
     return true;
   }
 

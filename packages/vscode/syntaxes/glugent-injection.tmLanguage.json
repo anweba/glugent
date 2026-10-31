@@ -62,7 +62,7 @@
       "name": "meta.literal-brace.glugent"
     },
     "ref-block": {
-      "match": "(\\{)\\s*(REF(?:-OVERRIDE)?)\\s+(BEGIN|END)(?:\\s+([\\w.\\-/]+))?\\s*(\\})",
+      "match": "(\\{)\\s*(REF(?:-OVERRIDE)?)\\s+(BEGIN|END)(?:\\s+([\\w.\\-/]+))?(?:\\s*(\\|)\\s*((?:[A-Za-z_][\\w.]*\\s*=\\s*(?:\"(?:[^\"\\\\]|\\\\.)*\"|true|false|-?\\d+(?:\\.\\d+)?)\\s*)+))?\\s*(\\})",
       "name": "meta.template.ref.glugent",
       "captures": {
         "1": {
@@ -78,6 +78,33 @@
           "name": "entity.name.section.glugent"
         },
         "5": {
+          "name": "keyword.operator.ref-props.glugent"
+        },
+        "6": {
+          "name": "meta.template.ref-props.glugent",
+          "patterns": [
+            {
+              "match": "([A-Za-z_][\\w.]*)\\s*(=)",
+              "captures": {
+                "1": {
+                  "name": "variable.parameter.glugent"
+                },
+                "2": {
+                  "name": "keyword.operator.assignment.glugent"
+                }
+              }
+            },
+            {
+              "match": "\"(?:[^\"\\\\]|\\\\.)*\"",
+              "name": "string.quoted.double.glugent"
+            },
+            {
+              "match": "\\b(?:true|false|-?\\d+(?:\\.\\d+)?)\\b",
+              "name": "constant.language.glugent"
+            }
+          ]
+        },
+        "7": {
           "name": "punctuation.definition.template-expression.end.glugent"
         }
       }
@@ -125,7 +152,7 @@
       }
     },
     "ref": {
-      "match": "(\\{)\\s*(REF(?:-OVERRIDE)?)\\s+([\\w.\\-/]+)\\s*(\\})",
+      "match": "(\\{)\\s*(REF(?:-OVERRIDE)?)\\s+([\\w.\\-/]+)(?:\\s*(\\|)\\s*((?:[A-Za-z_][\\w.]*\\s*=\\s*(?:\"(?:[^\"\\\\]|\\\\.)*\"|true|false|-?\\d+(?:\\.\\d+)?)\\s*)+))?\\s*(\\})",
       "name": "meta.template.ref.glugent",
       "captures": {
         "1": {
@@ -138,6 +165,33 @@
           "name": "entity.name.section.glugent"
         },
         "4": {
+          "name": "keyword.operator.ref-props.glugent"
+        },
+        "5": {
+          "name": "meta.template.ref-props.glugent",
+          "patterns": [
+            {
+              "match": "([A-Za-z_][\\w.]*)\\s*(=)",
+              "captures": {
+                "1": {
+                  "name": "variable.parameter.glugent"
+                },
+                "2": {
+                  "name": "keyword.operator.assignment.glugent"
+                }
+              }
+            },
+            {
+              "match": "\"(?:[^\"\\\\]|\\\\.)*\"",
+              "name": "string.quoted.double.glugent"
+            },
+            {
+              "match": "\\b(?:true|false|-?\\d+(?:\\.\\d+)?)\\b",
+              "name": "constant.language.glugent"
+            }
+          ]
+        },
+        "6": {
           "name": "punctuation.definition.template-expression.end.glugent"
         }
       }

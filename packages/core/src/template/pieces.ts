@@ -11,12 +11,23 @@ export type Piece =
   | { kind: "if"; start: number; end: number; branches: Branch[]; trimLeft?: boolean; trimRight?: boolean }
   /**
    * `{ REF id }`: the rendered section `id`. `override` for `REF-OVERRIDE` (the including section's props win).
-   * `fills` for the block form `{ REF BEGIN id } ... { REF END id }`.
+   * `props` for `{ REF id | NAME="value" }`; `fills` for the block form `{ REF BEGIN id } ... { REF END id }`.
    */
-  | { kind: "ref"; start: number; end: number; id: string; override: boolean; fills?: Fill[] }
+  | { kind: "ref"; start: number; end: number; id: string; override: boolean; props?: RefProp[]; fills?: Fill[] }
   /** A slot definition `{ #name? }`, alone on its line. */
   | { kind: "slot"; start: number; end: number; name: string; optional: boolean; trimLeft?: boolean; trimRight?: boolean }
   | { kind: "error"; start: number; end: number; message: string };
+
+/** One `NAME=value` passed to a REF, from `start` to `end` in the source. */
+export interface RefProp {
+  name: string;
+  start: number;
+  end: number;
+  /** A quoted value: template text, rendered with the including section's props. */
+  template?: string;
+  /** A bare `true`, `false` or number. */
+  value?: boolean | number;
+}
 
 export type IfPiece = Extract<Piece, { kind: "if" }>;
 export type RefPiece = Extract<Piece, { kind: "ref" }>;
