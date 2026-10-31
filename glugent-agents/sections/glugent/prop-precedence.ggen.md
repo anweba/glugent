@@ -10,3 +10,5 @@ description: Which prop layer wins
 5. `props` in `glugent.config.json`
 6. CLI `--set KEY=VALUE`
 
+Each section gets its own set of props; sections never see each other's `defaults`. A section included with `{{ REF id }}` has no section entry, so it gets layers 1–3, 5 and 6 only. `{{ REF-OVERRIDE id }}` then lays the including section's resolved props on top, which in effect puts the includer's `defaults` and section-entry `props` above the included section's `defaults`; config and CLI props still win.
+

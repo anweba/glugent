@@ -231,3 +231,57 @@ test("render: trim markers on if blocks", () => {
   assert.equal(renderTemplate(tpl, { A: "1" }).text, "a\n\nx\n\nb");
   assert.equal(scanTemplate(tpl).errors.length, 0);
 });
+
+test("scan: REF tags, and keywords still work as prop names", () => {
+  assert.deepEqual(scanTemplate("{REF} {SLOT} {if} { REF } {REF?} {BEGIN}").placeholders.map((p) => p.name), ["REF", "SLOT", "if", "REF", "REF", "BEGIN"]);
+  assert.deepEqual(scanTemplate("{ REF repo/layout } {REF-OVERRIDE a.b-c}").errors, []);
+  assert.deepEqual(scanTemplate("{ REF repo/layout }").placeholders, []);
+  assert.match(scanTemplate("{ REF a b }").errors[0].message, /Malformed 'REF'/);
+  assert.match(scanTemplate("{REF-OVERRIDE}").errors[0].message, /Malformed 'REF'/);
+  assert.match(scanTemplate("{ REF x").errors[0].message, /Malformed 'REF'/);
+  assert.match(scanTemplate("{ REF BEGIN }").errors[0].message, /'BEGIN' is reserved/);
+  assert.equal(renderTemplate("a { REF x } b", {}).text, "a { REF x } b"); // no renderRef: left as written
+});
+
+test("render: REF calls renderRef and drops its line when empty", () => {
+  const seen: string[] = [];
+  const r = renderTemplate("a\n{ REF x }\nb { REF-OVERRIDE y } c", {}, 2, (ref) => {
+    seen.push(`${ref.id}:${ref.override}:${ref.line}:${ref.column}`);
+    return ref.id === "y" ? "Y" : "";
+  });
+  assert.equal(r.text, "a\nb Y c");
+  assert.deepEqual(seen, ["x:false:3:0", "y:true:4:2"]);
+});
+
+test("project: REF renders with the section's own props, REF-OVERRIDE with the includer's on top", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-"));
+  fs.mkdirSync(path.join(dir, "parts"));
+  fs.writeFileSync(path.join(dir, "glugent.config.json"), JSON.stringify({ props: { CFG: "cfg" } }));
+  fs.writeFileSync(path.join(dir, "parts/b.ggen.md"), "---\ndefaults:\n  WHO: b\n---\nB: {WHO} {CFG} {T}");
+  fs.writeFileSync(path.join(dir, "a.ggen.md"), "---\ndefaults:\n  WHO: a\n  ONLY_A: x\n---\nA:\n{ REF b }\n{ REF-OVERRIDE parts/b }\n{ REF c }");
+  fs.writeFileSync(path.join(dir, "c.ggen.md"), "C sees {ONLY_A?\"nothing\"}");
+  fs.writeFileSync(path.join(dir, "t.agent.ggen.json"), JSON.stringify({ name: "t", props: { T: "t" }, sections: [{ use: "a", props: { WHO: "entry" } }] }));
+  const project = loadProject(path.join(dir, "glugent.config.json"));
+  const res = compileTarget(project, project.targets[0]);
+  assert.deepEqual(res.diagnostics, []);
+  assert.equal(res.content, "A:\nB: b cfg t\nB: entry cfg t\nC sees nothing\n");
+  // CLI overrides still win everywhere
+  assert.equal(compileTarget(project, project.targets[0], { overrides: { WHO: "cli" } }).content, "A:\nB: cli cfg t\nB: cli cfg t\nC sees nothing\n");
+});
+
+test("project: REF problems are reported where they happen", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-"));
+  fs.writeFileSync(path.join(dir, "glugent.config.json"), "{}");
+  fs.writeFileSync(path.join(dir, "c.ggen.md"), "{ REF d }\n{ REF nope }");
+  fs.writeFileSync(path.join(dir, "d.ggen.md"), "d {NEED}\n{ REF c }");
+  fs.writeFileSync(path.join(dir, "t.agent.ggen.json"), JSON.stringify({ name: "t", sections: ["c"] }));
+  const project = loadProject(path.join(dir, "glugent.config.json"));
+  const res = compileTarget(project, project.targets[0]);
+  const found = res.diagnostics.map((d) => `${path.basename(d.file)}:${d.line}:${d.column} ${d.message}`);
+  assert.deepEqual(found, [
+    "d.ggen.md:1:0 Section 'c' includes itself: 'c' → 'd' → 'c'",
+    "t.agent.ggen.json:0:24 Target 't': required prop 'NEED' of section 'd' (via 'c') has no value",
+    "c.ggen.md:1:0 Unknown section 'nope'",
+  ]);
+  assert.equal(res.content, "d\n");
+});

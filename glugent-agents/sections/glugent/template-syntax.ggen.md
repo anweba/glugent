@@ -11,10 +11,14 @@ description: The template language used inside sections
 | `{{- if A {{ ... }} -}}` | the same markers on an `if` block (`{{-` before `if` trims left, `-}}` closes and trims right); they apply when the block renders nothing. The closing `-}}` still needs whitespace before it (`}} -}}`) |
 | `{{NAME?"text"}}` | optional prop with an inline default. Used only when no other layer provides a value. The default may contain `{{`/`}}` and real line breaks; `\"`, `\\` and `\n` are also escapes |
 | `{{ if A && (B \|\| C) {{ ... }} else if D {{ ... }} else {{ ... }} }}` | conditional block: the first branch whose condition holds is rendered. A prop holds when it has a non-empty value (not `false`); operators, tightest first: `!` (not), `&&` (and) / `!&` (nand), `\|\|` (or) / `!\|` (nor); same-level operators group left to right, `()` groups. Bodies are text and/or any other `{{...}}`, including nested `if`s. Inline, a body is emitted verbatim (`{{ if A {{x}} else {{y}} }}`); if every tag (`{{ if ... {{`, `}} else ... {{`, `}} }}`) sits alone on its line, only the lines inside the chosen branch are emitted |
+| `{{ REF section/id }}` | the content of another section, rendered as if the target listed it here: with its own prop layers (its `defaults`, then target, config and CLI props), not the including section's. The id is resolved like a target entry (full id or unique suffix). Alone on its line and empty → the line is removed |
+| `{{ REF-OVERRIDE section/id }}` | the same, but the including section's props are laid on top, so they win wherever both set a prop |
 | `{{{{` / `}}}}` | literal `{{` / `}}` |
 | `{{!...!}}` | raw block: everything inside is kept as-is; only the `{{!` and `!}}` are removed |
 
-Prop names start with an ASCII letter or `_`, followed by letters, digits, `_` or `.`. Hyphens are not allowed (write `TEST_RUNNER`, not `TEST-RUNNER`), and names are case-sensitive.
+Prop names start with an ASCII letter or `_`, followed by letters, digits, `_` or `.`. Hyphens are not allowed (write `TEST_RUNNER`, not `TEST-RUNNER`), and names are case-sensitive. Keywords are only keywords in their own shape, so `{{if}}`, `{{REF}}` and `{{SLOT}}` are ordinary props; `BEGIN` and `END` cannot be section ids after `REF`.
+
+A section that includes itself through `REF`s (`a` → `b` → `a`) and a `REF` to an unknown section are errors, reported at the `REF`. A missing required prop in a `REF`'d section names the chain that led to it (`section 'b' (via 'a')`).
 
 **Every `{{` and `}}` belongs to Glugent.** A single `{{` or `}}` that is not part of a tag is an error. To write one, use `{{{{` or `}}}}`, or wrap the text in a raw block. Pairs are read left to right, so `{{{{NAME}}}}` renders `{{NAME}}` and `{{{{{{NAME}}}}}}` renders the value of `NAME` in braces.
 

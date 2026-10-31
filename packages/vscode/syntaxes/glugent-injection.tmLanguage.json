@@ -10,6 +10,9 @@
       "include": "#literal-brace"
     },
     {
+      "include": "#ref"
+    },
+    {
       "include": "#if-open"
     },
     {
@@ -48,6 +51,24 @@
     "literal-brace": {
       "match": "\\{\\{|\\}\\}",
       "name": "meta.literal-brace.glugent"
+    },
+    "ref": {
+      "match": "(\\{)\\s*(REF(?:-OVERRIDE)?)\\s+([\\w.\\-/]+)\\s*(\\})",
+      "name": "meta.template.ref.glugent",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.template-expression.begin.glugent"
+        },
+        "2": {
+          "name": "keyword.other.ref.glugent"
+        },
+        "3": {
+          "name": "entity.name.section.glugent"
+        },
+        "4": {
+          "name": "punctuation.definition.template-expression.end.glugent"
+        }
+      }
     },
     "if-open": {
       "match": "(\\{-?)\\s*(if)\\s+([\\w.()&|!\\s]+?)\\s*(\\{)",
