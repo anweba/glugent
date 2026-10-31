@@ -1,4 +1,4 @@
-<!-- Generated from glugent-agents by `npm run docs:build`. Edit the sections in glugent-agents/sections, not this file. -->
+<!-- Generated from .glugent by `npm run docs:build`. Edit the sections in .glugent/sections, not this file. -->
 
 # Contributing
 

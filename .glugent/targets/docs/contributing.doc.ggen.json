@@ -1,0 +1,7 @@
+{
+  "name": "contributing",
+  "output": "CONTRIBUTING.md",
+  "sections": [
+    "docs/contributing"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "glugent-agent-builder",
+  "sections": [
+    "agents/glugent-agent-builder"
+  ]
+}
