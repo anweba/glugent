@@ -31,6 +31,18 @@ export const IF_OPEN = new RegExp(`(\\{-?\\s*if\\s+)(${CONDITION})\\s*\\{`, "y")
 /** Just the start of an `if`, to tell a malformed one from a stray `{`. */
 export const IF_START = /\{-?\s*if\b/y;
 
+/** A section id as written in `{ REF id }`: a path such as `repo/layout` or a unique suffix of one. */
+const SECTION_ID = "[\\w.\\-/]+";
+
+/**
+ * `{ REF id }` or `{ REF-OVERRIDE id }`: group 1 the keyword, group 2 the section id.
+ * A lone `{REF}` has no id, so it stays a prop.
+ */
+export const REF = new RegExp(`\\{\\s*(REF|REF-OVERRIDE)\\s+(${SECTION_ID})\\s*\\}`, "y");
+
+/** Just the start of a `REF` (`REF-OVERRIDE`, or `REF` and something like an id), to tell a malformed one from a bad placeholder. */
+export const REF_START = /\{\s*REF(?:-OVERRIDE\b|\s+[\w.\-/])/y;
+
 /** `} else {` or `} else if <condition> {`. */
 export const ELSE = new RegExp(`\\}\\s*else(?:\\s+if\\s+(${CONDITION}))?\\s*\\{`, "y");
 

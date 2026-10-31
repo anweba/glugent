@@ -1,8 +1,21 @@
 import { Placeholder, Props } from "../types";
 import { conditionHolds } from "./condition";
 import { LineIndex } from "./line-index";
-import { IfPiece, Piece } from "./pieces";
+import { IfPiece, Piece, RefPiece } from "./pieces";
 import { TemplateScanner } from "./scanner";
+
+/** A `{ REF id }` met while rendering, with its position for diagnostics. */
+export interface TemplateRef {
+  id: string;
+  override: boolean;
+  /** 0-based, shifted by the renderer's `lineOffset`. */
+  line: number;
+  column: number;
+  length: number;
+}
+
+/** Renders a referenced section. The template layer knows no sections, so the caller supplies this. */
+export type RefRenderer = (ref: TemplateRef) => string;
 
 /** A prop holds in an `if` condition when it has a non-empty value (not `false`). */
 const isSet = (value: Props[string] | undefined) => value !== undefined && value !== false && String(value) !== "";
@@ -63,7 +76,9 @@ class Output {
  * content of its line removes the whole line. A block whose tags (`{ if ... {`,
  * `} else {`, `} }`) each sit alone on their lines is rendered as whole lines
  * (the tag lines never appear in the output). Only rendered branches report
- * missing props.
+ * missing props. A `{ REF id }` is replaced by what `renderRef` returns, and
+ * like a placeholder it removes its line when that is empty; without
+ * `renderRef` it is left as written.
  */
 export class TemplateRenderer {
   private readonly index: LineIndex;
@@ -74,6 +89,7 @@ export class TemplateRenderer {
     private readonly body: string,
     private readonly values: Props,
     private readonly lineOffset = 0,
+    private readonly renderRef?: RefRenderer,
   ) {
     this.index = new LineIndex(body);
     this.pieces = new TemplateScanner(body).scan().pieces;
@@ -107,6 +123,9 @@ export class TemplateRenderer {
         case "if":
           this.renderIf(out, piece);
           break;
+        case "ref":
+          this.renderRefPiece(out, piece);
+          break;
       }
     }
     return out.toString();
@@ -131,6 +150,18 @@ export class TemplateRenderer {
       name: token.name, optional: false, line: at.line + this.lineOffset, column: at.column,
       length: token.end - token.start, endLine: end.line + this.lineOffset, endColumn: end.column,
     });
+  }
+
+  // --- section references ------------------------------------------------
+
+  private renderRefPiece(out: Output, piece: RefPiece): void {
+    if (!this.renderRef) return out.append(this.body.slice(piece.start, piece.end));
+    const at = this.index.position(piece.start);
+    const text = this.renderRef({
+      id: piece.id, override: piece.override,
+      line: at.line + this.lineOffset, column: at.column, length: piece.end - piece.start,
+    });
+    this.emit(out, piece, text);
   }
 
   // --- if blocks ---------------------------------------------------------

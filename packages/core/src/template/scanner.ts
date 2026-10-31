@@ -1,5 +1,5 @@
 import { ConditionParser } from "./condition";
-import { BRACE, ELSE, IF_CLOSE, IF_OPEN, IF_START, PLACEHOLDER, TAG, unquote } from "./grammar";
+import { BRACE, ELSE, IF_CLOSE, IF_OPEN, IF_START, PLACEHOLDER, REF, REF_START, TAG, unquote } from "./grammar";
 import { Branch, Piece, Scanned } from "./pieces";
 
 /**
@@ -51,6 +51,9 @@ class Segment {
  *                   same trim markers on an `if` block that renders nothing
  *   { if A && (B || C) { ... } else if D { ... } else { ... } }
  *                   the first branch whose condition holds is rendered
+ *   { REF id }      the section `id`, rendered with its own props
+ *   { REF-OVERRIDE id }
+ *                   the same, but the including section's props win over the section's own
  */
 export class TemplateScanner {
   constructor(private readonly body: string) {}
@@ -97,7 +100,24 @@ export class TemplateScanner {
   private opening(segment: Segment, start: number, brace: string): undefined {
     if (brace === "{!") this.rawBlock(segment, start);
     else if (brace === "{{") segment.add({ kind: "literal", start, end: start + 2, value: "{" }, start + 2);
-    else if (!this.ifBlock(segment, start) && !this.placeholder(segment, start)) this.strayBrace(segment, start);
+    else if (!this.ref(segment, start) && !this.ifBlock(segment, start) && !this.placeholder(segment, start)) {
+      this.strayBrace(segment, start);
+    }
+  }
+
+  /** `{ REF id }` / `{ REF-OVERRIDE id }`. Returns false if none starts here. */
+  private ref(segment: Segment, start: number): boolean {
+    const ref = this.match(REF, start);
+    if (!ref) return false;
+    const end = start + ref[0].length;
+    const [, keyword, id] = ref;
+    if (id === "BEGIN" || id === "END") {
+      // Reserved for `{ REF BEGIN id } ... { REF END id }` blocks that fill slots.
+      segment.add({ kind: "error", start, end, message: `'${id}' is reserved after ${keyword} and cannot be a section id` }, end);
+    } else {
+      segment.add({ kind: "ref", start, end, id, override: keyword === "REF-OVERRIDE" }, end);
+    }
+    return true;
   }
 
   private rawBlock(segment: Segment, start: number): void {
@@ -115,7 +135,9 @@ export class TemplateScanner {
     const end = start + tag[0].length;
     const parts = PLACEHOLDER.exec(tag[1]);
     if (!parts) {
-      const message = `Invalid placeholder '${tag[0]}' (expected {NAME}, {NAME?}, {NAME?"default"}, {-NAME?-} or { if NAME { ... } })`;
+      const message = this.match(REF_START, start)
+        ? "Malformed 'REF' (expected { REF section/id } or { REF-OVERRIDE section/id })"
+        : `Invalid placeholder '${tag[0]}' (expected {NAME}, {NAME?}, {NAME?"default"}, {-NAME?-}, { if NAME { ... } } or { REF section/id })`;
       segment.add({ kind: "error", start, end, message }, end);
     } else if (parts[4] && !parts[3]) {
       segment.add({ kind: "error", start, end, message: "A default value needs '?' after the name" }, end);
@@ -136,7 +158,9 @@ export class TemplateScanner {
   private strayBrace(segment: Segment, start: number): void {
     const message = this.match(IF_START, start)
       ? "Malformed 'if' (expected { if NAME && (NAME || NAME) { ... } else { ... } })"
-      : "Unexpected '{' (use '{{' for a literal '{', or wrap text in {!...!})";
+      : this.match(REF_START, start)
+        ? "Malformed 'REF' (expected { REF section/id } or { REF-OVERRIDE section/id })"
+        : "Unexpected '{' (use '{{' for a literal '{', or wrap text in {!...!})";
     segment.add({ kind: "error", start, end: start + 1, message }, start + 1);
   }
 
