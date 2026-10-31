@@ -1,6 +1,6 @@
 ---
 "@anweba/glugent-core": minor
-"@anweba/glugent-cli": minor
+"glugent": minor
 "@anweba/glugent-schemas": minor
 "glugent-vscode": minor
 ---
