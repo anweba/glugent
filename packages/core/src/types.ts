@@ -28,6 +28,17 @@ export interface Placeholder {
   endColumn?: number;
 }
 
+/** A slot a section defines with `{ #name? }`. */
+export interface SlotDef {
+  name: string;
+  /** `{ #name? }`: filling it is optional. */
+  optional: boolean;
+  /** 0-based position inside the scanned text. */
+  line: number;
+  column: number;
+  length: number;
+}
+
 export interface GlugentConfig {
   sections?: { include?: string[]; exclude?: string[]; root?: string };
   targets?: { include?: string[]; exclude?: string[] };
@@ -46,11 +57,14 @@ export interface Section {
   /** Number of lines before the body (frontmatter) in the file. */
   bodyLineOffset: number;
   placeholders: Placeholder[];
+  slots: SlotDef[];
 }
 
 export interface SectionRef {
   use: string;
   props?: Props;
+  /** Slot contents by slot name: template text rendered with this entry's props. */
+  slots?: Record<string, string>;
 }
 
 /** Something that is built from sections: an agent, a document, anything. */

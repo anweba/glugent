@@ -29,4 +29,4 @@ All keys are optional. Globs are relative to the config file.
 }}
 ```
 
-`name` and `sections` are required. Each entry in `sections` is a section id or an object with `use` and its own `props`.
+`name` and `sections` are required. Each entry in `sections` is a section id or an object with `use`, its own `props`, and `slots`: slot contents by slot name (`default` for `{{ # }}`), as template text rendered with that entry's props, which may use `{{ REF id }}` (`{{ "use": "card", "slots": {{ "default": "{{ REF parts/body }}" }} }}`).

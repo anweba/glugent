@@ -23,7 +23,12 @@
             "required": ["use"],
             "properties": {
               "use": { "type": "string", "description": "Section id." },
-              "props": { "type": "object", "additionalProperties": { "type": ["string", "number", "boolean"] } }
+              "props": { "type": "object", "additionalProperties": { "type": ["string", "number", "boolean"] } },
+              "slots": {
+                "type": "object",
+                "description": "Slot contents by slot name ('default' for { # }): template text rendered with this entry's props; it may use { REF id }.",
+                "additionalProperties": { "type": "string" }
+              }
             },
             "additionalProperties": false
           }

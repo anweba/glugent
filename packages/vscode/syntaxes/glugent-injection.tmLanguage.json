@@ -10,6 +10,15 @@
       "include": "#literal-brace"
     },
     {
+      "include": "#ref-block"
+    },
+    {
+      "include": "#slot-block"
+    },
+    {
+      "include": "#slot"
+    },
+    {
       "include": "#ref"
     },
     {
@@ -51,6 +60,69 @@
     "literal-brace": {
       "match": "\\{\\{|\\}\\}",
       "name": "meta.literal-brace.glugent"
+    },
+    "ref-block": {
+      "match": "(\\{)\\s*(REF(?:-OVERRIDE)?)\\s+(BEGIN|END)(?:\\s+([\\w.\\-/]+))?\\s*(\\})",
+      "name": "meta.template.ref.glugent",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.template-expression.begin.glugent"
+        },
+        "2": {
+          "name": "keyword.other.ref.glugent"
+        },
+        "3": {
+          "name": "keyword.control.block.glugent"
+        },
+        "4": {
+          "name": "entity.name.section.glugent"
+        },
+        "5": {
+          "name": "punctuation.definition.template-expression.end.glugent"
+        }
+      }
+    },
+    "slot-block": {
+      "match": "(\\{)\\s*(SLOT(?:-INHERIT)?)\\s+(BEGIN|END)(?:\\s+([A-Za-z_][\\w.]*))?\\s*(\\})",
+      "name": "meta.template.slot-fill.glugent",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.template-expression.begin.glugent"
+        },
+        "2": {
+          "name": "keyword.other.slot.glugent"
+        },
+        "3": {
+          "name": "keyword.control.block.glugent"
+        },
+        "4": {
+          "name": "entity.name.tag.slot.glugent"
+        },
+        "5": {
+          "name": "punctuation.definition.template-expression.end.glugent"
+        }
+      }
+    },
+    "slot": {
+      "match": "(\\{-?)\\s*(#)([A-Za-z_][\\w.]*)?\\s*(\\?)?\\s*(-?\\})",
+      "name": "meta.template.slot.glugent",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.template-expression.begin.glugent"
+        },
+        "2": {
+          "name": "keyword.other.slot.glugent"
+        },
+        "3": {
+          "name": "entity.name.tag.slot.glugent"
+        },
+        "4": {
+          "name": "keyword.operator.optional.glugent"
+        },
+        "5": {
+          "name": "punctuation.definition.template-expression.end.glugent"
+        }
+      }
     },
     "ref": {
       "match": "(\\{)\\s*(REF(?:-OVERRIDE)?)\\s+([\\w.\\-/]+)\\s*(\\})",

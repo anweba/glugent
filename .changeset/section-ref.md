@@ -9,5 +9,5 @@ Sections can include other sections. `{ REF section/id }` renders another sectio
 - A `REF` alone on its line that renders nothing removes the line, like an empty optional prop.
 - A `REF` to an unknown section and a section that includes itself (`a` → `b` → `a`) are errors reported at the `REF`. A missing required prop in an included section names the chain (`section 'b' (via 'a')`).
 - `{REF}`, `{SLOT}` and `{if}` are still ordinary props; `BEGIN` and `END` are reserved and cannot be used as section ids after `REF`.
-- `renderTemplate` takes an optional fourth argument, a callback that renders each `REF`; without it a `REF` is left as written.
+- `renderTemplate`'s third argument can now be an options object, `{ lineOffset, renderRef, slots }`, besides the line offset; `renderRef` renders each `REF`, and without it a `REF` is left as written.
 - The editor extension highlights `REF` and `REF-OVERRIDE`.

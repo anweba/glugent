@@ -43,6 +43,30 @@ export const REF = new RegExp(`\\{\\s*(REF|REF-OVERRIDE)\\s+(${SECTION_ID})\\s*\
 /** Just the start of a `REF` (`REF-OVERRIDE`, or `REF` and something like an id), to tell a malformed one from a bad placeholder. */
 export const REF_START = /\{\s*REF(?:-OVERRIDE\b|\s+[\w.\-/])/y;
 
+/** `{ REF BEGIN id }` / `{ REF-OVERRIDE BEGIN id }`: group 1 the keyword, group 2 the id (absent if not written). */
+export const REF_BEGIN = new RegExp(`\\{\\s*(REF|REF-OVERRIDE)\\s+BEGIN(?:\\s+(${SECTION_ID}))?\\s*\\}`, "y");
+
+/** `{ REF END id }`, with either keyword: group 1 the id (absent if not written). */
+export const REF_END = new RegExp(`\\{\\s*REF(?:-OVERRIDE)?\\s+END(?:\\s+(${SECTION_ID}))?\\s*\\}`, "y");
+
+/** The slot a fill or definition names when it names none. */
+export const DEFAULT_SLOT = "default";
+
+/** `{ SLOT BEGIN name }` / `{ SLOT-INHERIT BEGIN }`: group 1 the keyword, group 2 the slot name (absent: the default slot). */
+export const SLOT_BEGIN = new RegExp(`\\{\\s*(SLOT|SLOT-INHERIT)\\s+BEGIN(?:\\s+(${NAME}))?\\s*\\}`, "y");
+
+/** `{ SLOT END name }`, with either keyword: group 1 the slot name (absent: the default slot). */
+export const SLOT_END = new RegExp(`\\{\\s*SLOT(?:-INHERIT)?\\s+END(?:\\s+(${NAME}))?\\s*\\}`, "y");
+
+/** Just the start of a SLOT tag, to tell a malformed one from a bad placeholder. A lone `{SLOT}` is a prop. */
+export const SLOT_START = /\{\s*SLOT(?:-INHERIT\b|\s+(?:BEGIN|END)\b)/y;
+
+/**
+ * A slot definition: `{ # }`, `{ #? }`, `{ #name }`, `{ #name? }`, with trim markers `{- #? -}`.
+ * Groups: 1 left marker, 2 name, 3 `?`, 4 right marker.
+ */
+export const SLOT_DEF = new RegExp(`\\{(-)?\\s*#(${NAME})?\\s*(\\?)?\\s*(-)?\\}`, "y");
+
 /** `} else {` or `} else if <condition> {`. */
 export const ELSE = new RegExp(`\\}\\s*else(?:\\s+if\\s+(${CONDITION}))?\\s*\\{`, "y");
 

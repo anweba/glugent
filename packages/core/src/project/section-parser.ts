@@ -24,7 +24,7 @@ export class SectionParser {
   parse(): { section: Section; diagnostics: Diagnostic[] } {
     this.readFrontmatter();
     this.body = this.body.replace(/\r\n/g, "\n");
-    const { placeholders, errors } = scanTemplate(this.body, this.bodyLineOffset);
+    const { placeholders, slots, errors } = scanTemplate(this.body, this.bodyLineOffset);
     for (const e of errors) this.diagnostics.push(diag(this.file, e.message, e.line, e.column, e.length));
 
     const section: Section = {
@@ -35,6 +35,7 @@ export class SectionParser {
       body: this.body,
       bodyLineOffset: this.bodyLineOffset,
       placeholders,
+      slots,
     };
     return { section, diagnostics: this.diagnostics };
   }

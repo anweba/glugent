@@ -239,16 +239,17 @@ test("scan: REF tags, and keywords still work as prop names", () => {
   assert.match(scanTemplate("{ REF a b }").errors[0].message, /Malformed 'REF'/);
   assert.match(scanTemplate("{REF-OVERRIDE}").errors[0].message, /Malformed 'REF'/);
   assert.match(scanTemplate("{ REF x").errors[0].message, /Malformed 'REF'/);
-  assert.match(scanTemplate("{ REF BEGIN }").errors[0].message, /'BEGIN' is reserved/);
+  assert.match(scanTemplate("{ REF BEGIN }{ REF END }").errors[0].message, /'REF BEGIN' needs a section id/);
+  assert.match(scanTemplate("{ REF END x }").errors[0].message, /'REF END' without a matching/);
   assert.equal(renderTemplate("a { REF x } b", {}).text, "a { REF x } b"); // no renderRef: left as written
 });
 
 test("render: REF calls renderRef and drops its line when empty", () => {
   const seen: string[] = [];
-  const r = renderTemplate("a\n{ REF x }\nb { REF-OVERRIDE y } c", {}, 2, (ref) => {
+  const r = renderTemplate("a\n{ REF x }\nb { REF-OVERRIDE y } c", {}, { lineOffset: 2, renderRef: (ref) => {
     seen.push(`${ref.id}:${ref.override}:${ref.line}:${ref.column}`);
     return ref.id === "y" ? "Y" : "";
-  });
+  } });
   assert.equal(r.text, "a\nb Y c");
   assert.deepEqual(seen, ["x:false:3:0", "y:true:4:2"]);
 });
@@ -284,4 +285,81 @@ test("project: REF problems are reported where they happen", () => {
     "c.ggen.md:1:0 Unknown section 'nope'",
   ]);
   assert.equal(res.content, "d\n");
+});
+
+test("scan: slot definitions", () => {
+  const { slots, errors } = scanTemplate("a\n{ # }\n  {#extra?}\n{- #notes? -}\nb");
+  assert.deepEqual(errors, []);
+  assert.deepEqual(slots.map((s) => `${s.name}:${s.optional}:${s.line}`), ["default:false:1", "extra:true:2", "notes:true:3"]);
+  assert.match(scanTemplate("a { # } b").errors[0].message, /must be on a line of its own/);
+  assert.match(scanTemplate("{ # }\n{ #default? }").errors[0].message, /Slot 'default' is defined twice/);
+  assert.match(scanTemplate("{- # -}").errors[0].message, /Trim markers need '\?'/);
+  assert.deepEqual(scanTemplate("{SLOT} {SLOT?}").placeholders.map((p) => p.name), ["SLOT", "SLOT"]);
+  assert.equal(renderTemplate("a\n\n{- #? -}\n\nb", {}).text, "ab"); // trims like {-X?-} when empty
+  assert.equal(renderTemplate("a\n{ #? }\nb", {}, { slots: { default: () => "x\ny" } }).text, "a\nx\ny\nb");
+  assert.deepEqual(renderTemplate("{ # }", {}).missingSlots.map((s) => s.name), ["default"]);
+});
+
+test("scan: REF blocks and SLOT blocks", () => {
+  const ok = "{ REF BEGIN b }\n{ SLOT BEGIN }\nx\n{ SLOT END }\n{ SLOT-INHERIT BEGIN extra }\n{Y}\n{ SLOT END extra }\n{ REF END b }";
+  assert.deepEqual(scanTemplate(ok).errors, []);
+  assert.deepEqual(scanTemplate(ok).placeholders.map((p) => p.name), ["Y"]);
+  const err = (t: string) => scanTemplate(t).errors.map((e) => e.message);
+  assert.match(err("{ REF BEGIN b }x{ REF END c }")[0], /'REF END c' does not match 'REF BEGIN b'/);
+  assert.match(err("{ REF BEGIN b }x")[0], /Unclosed 'REF BEGIN b'/);
+  assert.match(err("{ REF BEGIN b }stray{ SLOT BEGIN }x{ SLOT END }{ REF END b }")[0], /can hold only SLOT blocks/);
+  assert.match(err("{ REF BEGIN b }{ SLOT BEGIN }x{ SLOT END }{ SLOT BEGIN default }y{ SLOT END }{ REF END b }")[0], /filled twice/);
+  assert.match(err("{ REF BEGIN b }{ SLOT BEGIN a }x{ SLOT END z }{ REF END b }")[0], /'SLOT END z' does not match/);
+  assert.match(err("{ SLOT BEGIN }x{ SLOT END }")[0], /SLOT blocks go directly inside/);
+  assert.match(err("{ SLOT BEGIN x y }")[0], /Malformed 'SLOT'/);
+});
+
+test("project: slots filled from a REF block, from SLOT blocks and from the target", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-"));
+  fs.writeFileSync(path.join(dir, "glugent.config.json"), "{}");
+  // card: a required default slot, an optional named one, an optional trimmed one
+  fs.writeFileSync(path.join(dir, "card.ggen.md"), "---\ndefaults:\n  WHO: card\n---\n## {WHO}\n{ # }\n{ #extra? }\n\n{ #notes? -}\n\nend");
+  fs.writeFileSync(path.join(dir, "page.ggen.md"), [
+    "---", "defaults:", "  WHO: page", "---",
+    "{ REF BEGIN card }", "default by {WHO}", "{ REF END card }",
+    "---",
+    "{ REF BEGIN card }",
+    "{ SLOT BEGIN }", "mine: {WHO}", "{ SLOT END }",
+    "{ SLOT-INHERIT BEGIN extra }", "inherited: {WHO} {ONLY_PAGE}", "{ SLOT END extra }",
+    "{ REF END card }",
+  ].join("\n").replace("defaults:\n  WHO: page", "defaults:\n  WHO: page\n  ONLY_PAGE: p"));
+  fs.writeFileSync(path.join(dir, "t.agent.ggen.json"), JSON.stringify({
+    name: "t",
+    sections: ["page", { use: "card", props: { WHO: "entry" }, slots: { default: "from the target, {WHO}", notes: "{ REF note }" } }],
+  }));
+  fs.writeFileSync(path.join(dir, "note.ggen.md"), "a note");
+  const project = loadProject(path.join(dir, "glugent.config.json"));
+  assert.deepEqual(project.diagnostics, []);
+  const res = compileTarget(project, project.targets[0]);
+  assert.deepEqual(res.diagnostics, []);
+  assert.equal(res.content, [
+    "## card", "default by page", "", "end",
+    "---",
+    "## card", "mine: page", "inherited: card p", "", "end",
+    "",
+    "## entry", "from the target, entry", "", "a note", "", "end", "",
+  ].join("\n"));
+});
+
+test("project: slot problems are reported", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-"));
+  fs.writeFileSync(path.join(dir, "glugent.config.json"), "{}");
+  fs.writeFileSync(path.join(dir, "card.ggen.md"), "{ # }\n{ #opt? }");
+  fs.writeFileSync(path.join(dir, "page.ggen.md"), "{ REF card }\n{ REF BEGIN card }\n{ SLOT BEGIN nope }\nx\n{ SLOT END nope }\n{ REF END card }");
+  fs.writeFileSync(path.join(dir, "t.agent.ggen.json"), JSON.stringify({ name: "t", sections: ["page", "card", { use: "card", slots: { default: "{NEED}", missing: "x" } }] }));
+  const project = loadProject(path.join(dir, "glugent.config.json"));
+  const found = compileTarget(project, project.targets[0]).diagnostics.map((d) => `${path.basename(d.file)}:${d.line} ${d.message}`);
+  assert.deepEqual(found, [
+    "page.ggen.md:0 Required slot 'default' of section 'card' is not filled",
+    "page.ggen.md:2 Section 'card' has no slot 'nope'",
+    "page.ggen.md:1 Required slot 'default' of section 'card' is not filled",
+    "t.agent.ggen.json:0 Required slot 'default' of section 'card' is not filled",
+    "t.agent.ggen.json:0 Section 'card' has no slot 'missing'",
+    "t.agent.ggen.json:0 In slot 'default' of section 'card': required prop 'NEED' has no value",
+  ]);
 });

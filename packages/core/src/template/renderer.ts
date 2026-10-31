@@ -1,21 +1,46 @@
-import { Placeholder, Props } from "../types";
+import { Placeholder, Props, SlotDef } from "../types";
 import { conditionHolds } from "./condition";
 import { LineIndex } from "./line-index";
-import { IfPiece, Piece, RefPiece } from "./pieces";
+import { Fill, IfPiece, Piece, RefPiece, SlotPiece } from "./pieces";
 import { TemplateScanner } from "./scanner";
 
-/** A `{ REF id }` met while rendering, with its position for diagnostics. */
-export interface TemplateRef {
-  id: string;
-  override: boolean;
-  /** 0-based, shifted by the renderer's `lineOffset`. */
+/** A position for diagnostics: 0-based, shifted by the renderer's `lineOffset`; `length` counts the first line only. */
+export interface TemplatePosition {
   line: number;
   column: number;
   length: number;
 }
 
+/** A `{ REF id }` or `{ REF BEGIN id } ... { REF END id }` met while rendering. */
+export interface TemplateRef extends TemplatePosition {
+  id: string;
+  override: boolean;
+  /** What the block form puts into the section's slots; absent for `{ REF id }`. */
+  fills?: TemplateFill[];
+}
+
+/** The content for one slot, rendered by the including template with whatever props the caller picks. */
+export interface TemplateFill extends TemplatePosition {
+  name: string;
+  /** `SLOT-INHERIT`: the caller should let the filled section's props win. */
+  inherit: boolean;
+  render(values: Props): string;
+}
+
 /** Renders a referenced section. The template layer knows no sections, so the caller supplies this. */
 export type RefRenderer = (ref: TemplateRef) => string;
+
+export interface RenderOptions {
+  /** Shifts reported lines (the frontmatter before the body). */
+  lineOffset?: number;
+  /** Renders `{ REF id }`; without it a REF is left as written. */
+  renderRef?: RefRenderer;
+  /** Content for this template's slots by name, rendered only when the slot is. */
+  slots?: Record<string, () => string>;
+}
+
+/** A slot definition left empty, though filling it is required. */
+export type MissingSlot = Omit<SlotDef, "optional">;
 
 /** A prop holds in an `if` condition when it has a non-empty value (not `false`). */
 const isSet = (value: Props[string] | undefined) => value !== undefined && value !== false && String(value) !== "";
@@ -76,28 +101,36 @@ class Output {
  * content of its line removes the whole line. A block whose tags (`{ if ... {`,
  * `} else {`, `} }`) each sit alone on their lines is rendered as whole lines
  * (the tag lines never appear in the output). Only rendered branches report
- * missing props. A `{ REF id }` is replaced by what `renderRef` returns, and
- * like a placeholder it removes its line when that is empty; without
- * `renderRef` it is left as written.
+ * missing props. A `{ REF id }` and a slot `{ # }` are replaced by what
+ * `renderRef` / `slots` give, and like a placeholder they remove their line
+ * when that is empty; without `renderRef` a REF is left as written.
  */
 export class TemplateRenderer {
   private readonly index: LineIndex;
   private readonly pieces: Piece[];
-  private readonly missing: Placeholder[] = [];
+  private readonly missing: Placeholder[];
+  private readonly missingSlots: MissingSlot[];
 
+  /** `shared`: the renderer this one forks, to render part of the same template with other values. */
   constructor(
     private readonly body: string,
     private readonly values: Props,
-    private readonly lineOffset = 0,
-    private readonly renderRef?: RefRenderer,
+    private readonly options: RenderOptions = {},
+    shared?: TemplateRenderer,
   ) {
-    this.index = new LineIndex(body);
-    this.pieces = new TemplateScanner(body).scan().pieces;
+    this.index = shared?.index ?? new LineIndex(body);
+    this.pieces = shared?.pieces ?? new TemplateScanner(body).scan().pieces;
+    this.missing = shared?.missing ?? [];
+    this.missingSlots = shared?.missingSlots ?? [];
   }
 
-  render(): { text: string; missing: Placeholder[] } {
+  render(): { text: string; missing: Placeholder[]; missingSlots: MissingSlot[] } {
     const text = this.renderRange(this.pieces, 0, this.body.length);
-    return { text, missing: this.missing };
+    return { text, missing: this.missing, missingSlots: this.missingSlots };
+  }
+
+  private get lineOffset(): number {
+    return this.options.lineOffset ?? 0;
   }
 
   /** Renders `pieces`, clipping text to the source range `[lo, hi)`. */
@@ -125,6 +158,9 @@ export class TemplateRenderer {
           break;
         case "ref":
           this.renderRefPiece(out, piece);
+          break;
+        case "slot":
+          this.renderSlot(out, piece);
           break;
       }
     }
@@ -155,13 +191,29 @@ export class TemplateRenderer {
   // --- section references ------------------------------------------------
 
   private renderRefPiece(out: Output, piece: RefPiece): void {
-    if (!this.renderRef) return out.append(this.body.slice(piece.start, piece.end));
-    const at = this.index.position(piece.start);
-    const text = this.renderRef({
-      id: piece.id, override: piece.override,
-      line: at.line + this.lineOffset, column: at.column, length: piece.end - piece.start,
-    });
-    this.emit(out, piece, text);
+    const { renderRef } = this.options;
+    if (!renderRef) return out.append(this.body.slice(piece.start, piece.end));
+    const fills = piece.fills?.map((fill): TemplateFill => ({
+      name: fill.name, inherit: fill.inherit, ...this.position(fill.start, fill.end),
+      render: (values) => this.renderFill(fill, values),
+    }));
+    this.emit(out, piece, renderRef({ id: piece.id, override: piece.override, fills, ...this.position(piece.start, piece.end) }));
+  }
+
+  /**
+   * A fill's content with `values`, still part of this template: its missing props and
+   * slots are reported here. The line breaks right after the opening tag and before
+   * the closing one are not content.
+   */
+  private renderFill(fill: Fill, values: Props): string {
+    const text = new TemplateRenderer(this.body, values, this.options, this).renderRange(fill.children, fill.contentStart, fill.contentEnd);
+    return text.replace(/^[ \t]*\n/, "").replace(/\s+$/, "");
+  }
+
+  private renderSlot(out: Output, slot: SlotPiece): void {
+    const content = this.options.slots?.[slot.name];
+    if (!content && !slot.optional) this.missingSlots.push({ name: slot.name, ...this.position(slot.start, slot.end) });
+    this.emit(out, slot, content ? content() : "", slot);
   }
 
   // --- if blocks ---------------------------------------------------------
@@ -234,6 +286,14 @@ export class TemplateRenderer {
     const newline = this.body.indexOf("\n", piece.end);
     const lineEnd = newline === -1 ? this.body.length : newline;
     return this.index.isBlank(this.index.lineStartOf(piece.start), piece.start) && this.index.isBlank(piece.end, lineEnd);
+  }
+
+  /** Where `[start, end)` is, for diagnostics; the length counts the first line only. */
+  private position(start: number, end: number): TemplatePosition {
+    const at = this.index.position(start);
+    const newline = this.body.indexOf("\n", start);
+    const firstLineEnd = newline === -1 || newline > end ? end : newline;
+    return { line: at.line + this.lineOffset, column: at.column, length: firstLineEnd - start };
   }
 
   private lookup(name: string): Props[string] | undefined {
