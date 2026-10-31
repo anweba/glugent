@@ -1,0 +1,15 @@
+{
+  "name": "contributing",
+  "output": "CONTRIBUTING.md",
+  "sections": [
+    "generated-note",
+    "title",
+    "layout",
+    "dev-commands",
+    "sending-a-change",
+    "versioning",
+    "maintainers-heading",
+    "releasing",
+    "patching-older-releases"
+  ]
+}

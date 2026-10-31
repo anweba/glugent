@@ -1,8 +1,10 @@
+<!-- Generated from glugent-agents by `npm run docs:build`. Edit the sections in glugent-agents/sections, not this file. -->
+
 # Glugent
 
-Glue Markdown **sections** into **agents**. Sections are ordinary Markdown with `{props}`; agents are small JSON files listing which sections to glue together.
+Glue Markdown **sections** into **targets**: agents, docs, or anything else you build from Markdown. Sections are ordinary Markdown with `{props}`; targets are small JSON files listing which sections to glue together.
 
-Use the `glugent` command-line tool to build agents, and the VS Code extension for highlighting, diagnostics and completion while you write sections.
+Use the `glugent` command-line tool to build targets, and the VS Code extension for highlighting, diagnostics and completion while you write sections.
 
 ## Files
 
@@ -10,9 +12,11 @@ Use the `glugent` command-line tool to build agents, and the VS Code extension f
 |---|---|
 | Project config | `glugent.config.json` (found by walking up from cwd) |
 | Sections | `**/*.ggen.md` |
-| Agents | `**/*.agent.ggen.json` |
+| Targets | `**/*.{target,agent,doc}.ggen.json` |
 
-Both defaults are just globs: set `sections.include/exclude` and `agents.include/exclude` in the config to put files anywhere. The config is authoritative; no folder structure is assumed. Add `"$schema"` to any agent JSON for editor validation regardless of its file name.
+These defaults are just globs: set `sections.include/exclude` and `targets.include/exclude` in the config to put files anywhere (`agents.include/exclude` is still read, as an older name for `targets`). The config is authoritative; no folder structure is assumed. Add `"$schema"` to any target JSON for editor validation regardless of its file name.
+
+A **target** is anything built from sections: an agent, a document, or something else. `.target.ggen.json`, `.agent.ggen.json` and `.doc.ggen.json` files are exactly the same thing; choose the suffix that tells readers what the file builds.
 
 ## Template syntax
 
@@ -26,6 +30,8 @@ Both defaults are just globs: set `sections.include/exclude` and `agents.include
 | `{ if A && (B \|\| C) { ... } else if D { ... } else { ... } }` | conditional block: the first branch whose condition holds is rendered. A prop holds when it has a non-empty value (not `false`); operators, tightest first: `!` (not), `&&` (and) / `!&` (nand), `\|\|` (or) / `!\|` (nor); same-level operators group left to right, `()` groups. Bodies are text and/or any other `{...}`, including nested `if`s. Inline, a body is emitted verbatim (`{ if A {x} else {y} }`); if every tag (`{ if ... {`, `} else ... {`, `} }`) sits alone on its line, only the lines inside the chosen branch are emitted |
 | `{{` / `}}` | literal `{` / `}` |
 | `{!...!}` | raw block: everything inside is kept as-is; only the `{!` and `!}` are removed |
+
+Prop names start with an ASCII letter or `_`, followed by letters, digits, `_` or `.`. Hyphens are not allowed (write `TEST_RUNNER`, not `TEST-RUNNER`), and names are case-sensitive.
 
 **Every `{` and `}` belongs to Glugent.** A single `{` or `}` that is not part of a tag is an error. To write one, use `{{` or `}}`, or wrap the text in a raw block. Pairs are read left to right, so `{{NAME}}` renders `{NAME}` and `{{{NAME}}}` renders the value of `NAME` in braces.
 
@@ -48,13 +54,13 @@ defaults:
 
 ## Section ids
 
-The id is the path relative to the config (or `sections.root`) without `.ggen.md`, e.g. `glugent/base/identity`. An agent may refer to a section by a unique path suffix (`base/identity`, or just `identity`).
+The id is the path relative to the config (or `sections.root`) without `.ggen.md`, e.g. `glugent/base/identity`. A target may refer to a section by a unique path suffix (`base/identity`, or just `identity`).
 
 ## Prop precedence (lowest → highest)
 
 1. inline default (`{NAME?"text"}`)
 2. section `defaults`
-3. agent `props`
+3. target `props`
 4. section-entry `props` (`{ "use": "...", "props": {...} }`)
 5. `props` in `glugent.config.json`
 6. CLI `--set KEY=VALUE`
@@ -62,7 +68,7 @@ The id is the path relative to the config (or `sections.root`) without `.ggen.md
 ## CLI
 
 ```bash
-glugent build [agent...] [--set KEY=VALUE]... [--config <path>] [--dry-run]
+glugent build [target...] [--set KEY=VALUE]... [--config <path>] [--dry-run]
 glugent validate [--set KEY=VALUE]... [--config <path>]
 glugent list [--config <path>]
 glugent convert <file.md>... [--force] [--dry-run]
@@ -70,7 +76,7 @@ glugent convert <file.md>... [--force] [--dry-run]
 
 `convert` turns plain Markdown into a section: it writes `<file>.ggen.md` next to each file, with every `{` escaped as `{{` and every `}` as `}}` (frontmatter is left alone). It needs no project and refuses to overwrite an existing file unless `--force` is given.
 
-With no agent names, `build` builds every agent. The config is found by searching upward from the current directory. Example:
+With no target names, `build` builds every target. The config is found by searching upward from the current directory. Example:
 
 ```bash
 glugent build --set ADDITIONAL_INSTRUCTIONS="Be terse."
@@ -78,6 +84,6 @@ glugent build --set ADDITIONAL_INSTRUCTIONS="Be terse."
 
 ## VS Code extension
 
-Features: syntax highlighting for placeholders and `if` blocks, live diagnostics (unknown section, missing required prop, stray `{` or `}`, bad JSON), completion for prop names and section ids, hover, JSON-schema validation of config and agent files, and the commands *Glugent: Build All Agents / Build Agent… / Validate Project*.
+Features: syntax highlighting for placeholders and `if` blocks, live diagnostics (unknown section, missing required prop, stray `{` or `}`, bad JSON), completion for prop names and section ids, hover, JSON-schema validation of config and target files, and the commands *Glugent: Build All Targets / Build Target… / Validate Project*.
 
 `.ggen.md` files use the `glugent` language, which is Markdown plus Glugent tokens.

@@ -24,7 +24,10 @@
     "release": "npm run build && changeset publish",
     "example:validate": "node packages/cli/bin/glugent.js validate -c examples/basic/glugent.config.json",
     "example:build": "node packages/cli/bin/glugent.js build -c examples/basic/glugent.config.json",
-    "release:maintenance": "npm run build && changeset publish --tag maintenance"
+    "release:maintenance": "npm run build && changeset publish --tag maintenance",
+    "targets:validate": "node packages/cli/bin/glugent.js validate -c glugent.config.json",
+    "targets:build": "node packages/cli/bin/glugent.js build -c glugent.config.json",
+    "docs:build": "node packages/cli/bin/glugent.js build readme contributing -c glugent.config.json"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",
