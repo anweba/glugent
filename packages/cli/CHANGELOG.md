@@ -1,5 +1,25 @@
 # glugent
 
+## 0.4.0
+
+### Minor Changes
+
+- [#19](https://github.com/anweba/glugent/pull/19) [`6544efc`](https://github.com/anweba/glugent/commit/6544efcf854600d64d12d5c485c7d887bfc11cdd) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - `glugent build --check` checks that the built files are up to date without writing anything. It compiles the targets, compares each result with the file on disk and lists every file that is missing or out of date; it exits with 1 if there is any, so it works in CI and in Git hooks. It takes the same target names and `--set` as `build`.
+
+  ```
+  $ glugent build --check
+  ✓ readme → README.md (up to date)
+  ✗ helper → agents/helper.md (out of date)
+  Run 'glugent build' to update the files above.
+  ```
+
+  Library API: `checkBuild(result)` returns `"current"`, `"stale"` or `"missing"` for a build result.
+
+### Patch Changes
+
+- Updated dependencies [[`6544efc`](https://github.com/anweba/glugent/commit/6544efcf854600d64d12d5c485c7d887bfc11cdd), [`9f052c4`](https://github.com/anweba/glugent/commit/9f052c4b5b48f7a474692cfe2a399d2f7f6484dd), [`df85f1e`](https://github.com/anweba/glugent/commit/df85f1ef192bd7ed523bbd0ba27e7eada630625e), [`8058697`](https://github.com/anweba/glugent/commit/8058697279093f608596cb7669356a4f0de8d713)]:
+  - @anweba/glugent-core@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes
