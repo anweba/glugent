@@ -1,0 +1,4 @@
+#!/bin/sh
+# After switching or creating a branch ($3 is 1; 0 means files were checked out).
+[ "$3" = "1" ] && "$(dirname "$0")/check-agents"
+exit 0

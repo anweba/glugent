@@ -1,0 +1,14 @@
+#!/bin/sh
+# Warns, without changing or blocking anything, when the built agents (and the
+# generated docs) do not match the sources of this checkout.
+cd "$(git rev-parse --show-toplevel)" || exit 0
+[ -f packages/cli/dist/cli.js ] || exit 0 # nothing built yet: npm run build
+
+report=$(node packages/cli/bin/glugent.js build --check -c glugent.config.json 2>&1)
+if [ $? -ne 0 ]; then
+  echo
+  echo "glugent: some built files do not match the sources of this checkout:"
+  echo "$report" | grep "✗"
+  echo "Rebuild them with: npm run targets:build (run npm run build first if the CLI changed)."
+fi
+exit 0

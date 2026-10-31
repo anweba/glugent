@@ -1,0 +1,26 @@
+#!/bin/sh
+# Runs what CI runs, so a failure shows up before it reaches GitHub.
+# Skip it once with: git push --no-verify
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "pre-push: note: the checks run on your working tree, which has uncommitted changes."
+fi
+
+echo "pre-push: running the CI checks (npm run verify)..."
+if ! npm run --silent verify; then
+  echo "pre-push: the checks failed, so nothing was pushed. Fix them, or push with --no-verify."
+  exit 1
+fi
+
+# CI also needs a changeset on pull requests that touch a package. Pull requests go to
+# main; a branch for a release/<line> branch would be compared against that line instead.
+case "$(git rev-parse --abbrev-ref HEAD)" in
+  main | release/* | changeset-release/*) ;;
+  *)
+    if ! npx changeset status --since=origin/main; then
+      echo "pre-push: this branch changes a package but has no changeset (npm run changeset)."
+      exit 1
+    fi
+    ;;
+esac
