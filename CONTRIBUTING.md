@@ -7,7 +7,7 @@
 ```
 packages/
   core/     @anweba/glugent-core  – config, discovery, parsing, validation, compilation (single source of truth)
-  cli/      @anweba/glugent-cli   – thin wrapper: `glugent build|validate|list`
+  cli/      glugent               – thin wrapper: `glugent build|validate|list`
   vscode/   glugent-vscode – thin wrapper: highlighting, diagnostics, completion, hover, build commands
   schemas/  JSON Schemas for glugent.config.json and target files
 examples/basic/
@@ -76,7 +76,7 @@ Glugent is in beta: all packages are `0.x`. Until 1.0.0:
 | Breaking (e.g. a syntax change that invalidates existing `.ggen.md` files) | **minor** (`0.1.0` → `0.2.0`) |
 | New feature or fix | **patch** (`0.1.0` → `0.1.1`) |
 
-`@anweba/glugent-core` and `@anweba/glugent-cli` are released together (same version); `glugent-vscode` and `@anweba/glugent-schemas` version on their own.
+`@anweba/glugent-core` and `glugent` are released together (same version); `glugent-vscode` and `@anweba/glugent-schemas` version on their own.
 
 ---
 
@@ -90,12 +90,12 @@ Glugent is in beta: all packages are `0.x`. Until 1.0.0:
 Publishing uses npm **trusted publishing** (OIDC): the Release job proves its identity to npm, so no token is stored. Set it up once:
 
 - Own the `@anweba` scope on npm (an organization or user), with 2FA enabled.
-- For each of `@anweba/glugent-core`, `-cli` and `-schemas`: npmjs.com → the package → **Settings → Trusted Publisher → GitHub Actions**, with organization/user `anweba`, repository `glugent`, workflow filename `release.yml` (leave environment empty). The package must already exist to be configured, so publish the very first version (`0.2.0`) by hand: `npm login`, then `npm publish --access public -w <package>` after `npm run build`; later releases are automatic.
+- For each of `@anweba/glugent-core`, `@anweba/glugent-schemas` and `glugent` (the CLI): npmjs.com → the package → **Settings → Trusted Publisher → GitHub Actions**, with organization/user `anweba`, repository `glugent`, workflow filename `release.yml` (leave environment empty). The package must already exist to be configured, so publish its very first version by hand: `npm login`, then `npm publish --access public -w <package>` after `npm run build`; later releases are automatic.
 - Optionally, once trusted publishing works, set each package's **Publishing access** to *Require two-factor authentication and disallow tokens*.
 
 The workflow needs `id-token: write`, Node 24 (npm >= 11.5.1) and a GitHub-hosted runner; the `repository.url` in each `package.json` must match this repo. Trusted publishing also generates provenance for public packages.
 
-`@anweba/glugent-core`, `-cli` and `-schemas` are published publicly (`publishConfig.access`); `dist/test` is left out of the tarballs. `glugent-vscode` is `private` so it is versioned and tagged but never pushed to npm. Releases from `release/**` branches go out under the `maintenance` dist-tag, so an old line never becomes `latest`.
+`@anweba/glugent-core`, `@anweba/glugent-schemas` and `glugent` are published publicly (`publishConfig.access`); `dist/test` is left out of the tarballs. `glugent-vscode` is `private` so it is versioned and tagged but never pushed to npm. Releases from `release/**` branches go out under the `maintenance` dist-tag, so an old line never becomes `latest`.
 
 ## Patching an older release
 

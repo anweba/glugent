@@ -6,7 +6,7 @@ description: Packages, folders and architecture of the Glugent repository
 ```
 packages/
   core/     @anweba/glugent-core  – config, discovery, parsing, validation, compilation (single source of truth)
-  cli/      @anweba/glugent-cli   – thin wrapper: `glugent build|validate|list`
+  cli/      glugent               – thin wrapper: `glugent build|validate|list`
   vscode/   glugent-vscode – thin wrapper: highlighting, diagnostics, completion, hover, build commands
   schemas/  JSON Schemas for glugent.config.json and target files
 examples/basic/

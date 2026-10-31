@@ -1,4 +1,4 @@
-# @anweba/glugent-cli
+# glugent
 
 ## 0.2.0
 
