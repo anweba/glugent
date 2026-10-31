@@ -1,5 +1,49 @@
 # @anweba/glugent-core
 
+## 0.4.0
+
+### Minor Changes
+
+- [#19](https://github.com/anweba/glugent/pull/19) [`6544efc`](https://github.com/anweba/glugent/commit/6544efcf854600d64d12d5c485c7d887bfc11cdd) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - `glugent build --check` checks that the built files are up to date without writing anything. It compiles the targets, compares each result with the file on disk and lists every file that is missing or out of date; it exits with 1 if there is any, so it works in CI and in Git hooks. It takes the same target names and `--set` as `build`.
+
+  ```
+  $ glugent build --check
+  ✓ readme → README.md (up to date)
+  ✗ helper → agents/helper.md (out of date)
+  Run 'glugent build' to update the files above.
+  ```
+
+  Library API: `checkBuild(result)` returns `"current"`, `"stale"` or `"missing"` for a build result.
+
+- [#17](https://github.com/anweba/glugent/pull/17) [`9f052c4`](https://github.com/anweba/glugent/commit/9f052c4b5b48f7a474692cfe2a399d2f7f6484dd) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - A `REF` can pass props to the section it includes: `{ REF common/h2 | HEAD="How you review" LEVEL=2 }`. It works on `REF`, `REF-OVERRIDE` and `REF BEGIN` (not on END tags).
+
+  - A quoted value is a template rendered with the including section's props, so `HEAD="{TITLE} rules"` passes the includer's `TITLE`. A required prop missing there is the including section's error. Inside the quotes, `\"`, `\\` and `\n` escape, and literal braces are `{{` / `}}`.
+  - `true`, `false` and numbers are written bare (`STRICT=true`), so they work in conditions; the string `"false"` would count as set.
+  - Precedence for the included section: its own `defaults` → target props → the including section's props (`REF-OVERRIDE`) → **passed props** → config props → `--set`.
+  - Props are separated by spaces; passing one twice, or a value that is not quoted, `true`, `false` or a number, is an error.
+  - Library API: `TemplateRef.props` holds the passed props, already rendered.
+  - The editor extension highlights the passed props.
+
+- [#13](https://github.com/anweba/glugent/pull/13) [`df85f1e`](https://github.com/anweba/glugent/commit/df85f1ef192bd7ed523bbd0ba27e7eada630625e) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - Sections can include other sections. `{ REF section/id }` renders another section in place, as if the target listed it there: it uses its own prop layers (its `defaults`, then target, config and CLI props), not the including section's. `{ REF-OVERRIDE section/id }` does the same but lays the including section's props on top, so they win wherever both set a prop.
+
+  - The id is resolved like a target entry: the full id or a unique suffix.
+  - A `REF` alone on its line that renders nothing removes the line, like an empty optional prop.
+  - A `REF` to an unknown section and a section that includes itself (`a` → `b` → `a`) are errors reported at the `REF`. A missing required prop in an included section names the chain (`section 'b' (via 'a')`).
+  - `{REF}`, `{SLOT}` and `{if}` are still ordinary props; `BEGIN` and `END` are reserved and cannot be used as section ids after `REF`.
+  - `renderTemplate`'s third argument can now be an options object, `{ lineOffset, renderRef, slots }`, besides the line offset; `renderRef` renders each `REF`, and without it a `REF` is left as written.
+  - The editor extension highlights `REF` and `REF-OVERRIDE`.
+
+- [#15](https://github.com/anweba/glugent/pull/15) [`8058697`](https://github.com/anweba/glugent/commit/8058697279093f608596cb7669356a4f0de8d713) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - Sections can define **slots** that the including side fills.
+
+  - `{ # }` is a required slot and `{ #? }` an optional one; `{ #name }` / `{ #name? }` name it (unnamed is `default`). A slot must be alone on its line, names are unique in a section, and `{- #? -}` trims like `{-NAME?-}` when the slot is empty.
+  - `{ REF BEGIN id } ... { REF END id }` (or `REF-OVERRIDE`) includes a section and fills its slots. Its content fills `default`, or it holds only `{ SLOT BEGIN name } ... { SLOT END name }` blocks (no name: `default`). Content can use every feature, including the including section's own slots.
+  - Slot content renders with the including section's props. `{ SLOT-INHERIT BEGIN name }` content sees the filled section's props first and falls back to the including section's.
+  - Target entries can fill slots too: `{ "use": "card", "slots": { "default": "text, or { REF parts/body }" } }`. The text renders with the entry's props.
+  - Errors: a plain `{ REF id }` (or a target entry) that leaves a required slot empty, filling a slot the section does not define, filling one twice, and a REF block that mixes SLOT blocks with other content.
+  - `{SLOT}`, `{REF}`, `{BEGIN}` and `{END}` are still ordinary props.
+  - Library API: `Section.slots` lists a section's slots, `SectionRef.slots` holds an entry's fills, `scanTemplate` returns `slots`, and `renderTemplate` takes `slots` in its options and returns `missingSlots`.
+  - The target schema accepts `slots` on section entries; the editor extension highlights slots and `REF` / `SLOT` blocks.
+
 ## 0.3.0
 
 ### Minor Changes
