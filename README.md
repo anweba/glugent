@@ -30,6 +30,7 @@ A **target** is anything built from sections: an agent, a document, or something
 | `{ if A && (B \|\| C) { ... } else if D { ... } else { ... } }` | conditional block: the first branch whose condition holds is rendered. A prop holds when it has a non-empty value (not `false`); operators, tightest first: `!` (not), `&&` (and) / `!&` (nand), `\|\|` (or) / `!\|` (nor); same-level operators group left to right, `()` groups. Bodies are text and/or any other `{...}`, including nested `if`s. Inline, a body is emitted verbatim (`{ if A {x} else {y} }`); if every tag (`{ if ... {`, `} else ... {`, `} }`) sits alone on its line, only the lines inside the chosen branch are emitted |
 | `{ REF section/id }` | the content of another section, rendered as if the target listed it here: with its own prop layers (its `defaults`, then target, config and CLI props), not the including section's. The id is resolved like a target entry (full id or unique suffix). Alone on its line and empty → the line is removed |
 | `{ REF-OVERRIDE section/id }` | the same, but the including section's props are laid on top, so they win wherever both set a prop |
+| `{ REF section/id \| NAME="text" FLAG=true }` | passes props to the included section, on any `REF`, `REF-OVERRIDE` or `REF BEGIN`. A quoted value is a template rendered with the including section's props (`HEAD="{TITLE} rules"`; `\"`, `\\` and `\n` escape); `true`, `false` and numbers are written bare. They beat the included section's own props and `REF-OVERRIDE`'s, but not config or CLI props. Names are separated by spaces and can be passed once |
 | `{ # }` / `{ #? }` | a slot: the including side fills it (`?`: filling it is optional). Name it with `{ #name }` / `{ #name? }`; unnamed is `default`. It must be alone on its line, names are unique in a section, and `{- #? -}` trims like `{-NAME?-}` when the slot is empty |
 | `{ REF BEGIN section/id }` … `{ REF END section/id }` | a `REF` (or `REF-OVERRIDE`) that fills the section's slots. The content fills `default`, or holds only `{ SLOT BEGIN name }` … `{ SLOT END name }` blocks (no name: `default`). Content can use every feature, including the including section's own slots. A plain `{ REF id }` to a section with a required slot is an error |
 | `{ SLOT-INHERIT BEGIN name }` … `{ SLOT END name }` | a slot fill that sees the filled section's props first and falls back to the including section's |
@@ -85,7 +86,15 @@ The id is the path relative to the config (or `sections.root`) without `.ggen.md
 5. `props` in `glugent.config.json`
 6. CLI `--set KEY=VALUE`
 
-Each section gets its own set of props; sections never see each other's `defaults`. A section included with `{ REF id }` has no section entry, so it gets layers 1–3, 5 and 6 only. `{ REF-OVERRIDE id }` then lays the including section's resolved props on top, which in effect puts the includer's `defaults` and section-entry `props` above the included section's `defaults`; config and CLI props still win.
+Each section gets its own set of props; sections never see each other's `defaults`. For a section included with a `REF`, layer 4 is what the REF passes (`{ REF id | NAME="text" }`), and `REF-OVERRIDE` adds the including section's resolved props just below it:
+
+1. inline default
+2. the included section's `defaults`
+3. target `props`
+4. the including section's props (`REF-OVERRIDE` only)
+5. props passed with `| NAME="text"`
+6. `props` in `glugent.config.json`
+7. CLI `--set KEY=VALUE`
 
 Slot content renders with the props of the section that wrote it (the including one). `{ SLOT-INHERIT BEGIN name }` content renders with the filled section's props, falling back to the including section's for props it does not set. Slot text in a target entry's `slots` renders with that entry's props.
 

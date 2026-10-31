@@ -1,7 +1,7 @@
 import { Placeholder, Props, SlotDef } from "../types";
 import { conditionHolds } from "./condition";
 import { LineIndex } from "./line-index";
-import { Fill, IfPiece, Piece, RefPiece, SlotPiece } from "./pieces";
+import { Fill, IfPiece, Piece, RefPiece, RefProp, SlotPiece } from "./pieces";
 import { TemplateScanner } from "./scanner";
 
 /** A position for diagnostics: 0-based, shifted by the renderer's `lineOffset`; `length` counts the first line only. */
@@ -15,6 +15,8 @@ export interface TemplatePosition {
 export interface TemplateRef extends TemplatePosition {
   id: string;
   override: boolean;
+  /** `{ REF id | NAME="value" }`: the props passed, quoted values already rendered with this template's props. */
+  props?: Props;
   /** What the block form puts into the section's slots; absent for `{ REF id }`. */
   fills?: TemplateFill[];
 }
@@ -197,7 +199,26 @@ export class TemplateRenderer {
       name: fill.name, inherit: fill.inherit, ...this.position(fill.start, fill.end),
       render: (values) => this.renderFill(fill, values),
     }));
-    this.emit(out, piece, renderRef({ id: piece.id, override: piece.override, fills, ...this.position(piece.start, piece.end) }));
+    const props = piece.props && this.refProps(piece.props);
+    this.emit(out, piece, renderRef({ id: piece.id, override: piece.override, props, fills, ...this.position(piece.start, piece.end) }));
+  }
+
+  /**
+   * The props a REF passes. A quoted value is a template of its own, rendered with this
+   * template's props; a required prop it is missing is reported here, at the `NAME="..."`.
+   */
+  private refProps(props: RefProp[]): Props {
+    const passed: Props = {};
+    for (const prop of props) {
+      if (prop.template === undefined) {
+        passed[prop.name] = prop.value!;
+        continue;
+      }
+      const value = new TemplateRenderer(prop.template, this.values, { renderRef: this.options.renderRef }).render();
+      for (const m of value.missing) this.reportMissing({ name: m.name, start: prop.start, end: prop.end });
+      passed[prop.name] = value.text;
+    }
+    return passed;
   }
 
   /**

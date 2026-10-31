@@ -34,17 +34,30 @@ export const IF_START = /\{-?\s*if\b/y;
 /** A section id as written in `{ REF id }`: a path such as `repo/layout` or a unique suffix of one. */
 const SECTION_ID = "[\\w.\\-/]+";
 
+/** A prop value passed to a REF: a quoted template, or a bare `true`, `false` or number. */
+const REF_VALUE = `(?:${STRING}|true|false|-?\\d+(?:\\.\\d+)?)`;
+
+/** `| NAME=value NAME=value`: props passed to a REF, separated by whitespace. */
+const REF_PROPS = `(?:\\s*\\|\\s*(${NAME}\\s*=\\s*${REF_VALUE}(?:\\s+${NAME}\\s*=\\s*${REF_VALUE})*))?`;
+
+/** One `NAME=value` of a REF's props: group 1 the name, group 2 the value as written. */
+export const REF_PROP = new RegExp(`(${NAME})\\s*=\\s*(${REF_VALUE})`, "g");
+
 /**
- * `{ REF id }` or `{ REF-OVERRIDE id }`: group 1 the keyword, group 2 the section id.
+ * `{ REF id }` or `{ REF-OVERRIDE id }`, optionally with `| NAME=value ...`:
+ * group 1 the keyword, group 2 the section id, group 3 the props.
  * A lone `{REF}` has no id, so it stays a prop.
  */
-export const REF = new RegExp(`\\{\\s*(REF|REF-OVERRIDE)\\s+(${SECTION_ID})\\s*\\}`, "y");
+export const REF = new RegExp(`\\{\\s*(REF|REF-OVERRIDE)\\s+(${SECTION_ID})${REF_PROPS}\\s*\\}`, "y");
 
 /** Just the start of a `REF` (`REF-OVERRIDE`, or `REF` and something like an id), to tell a malformed one from a bad placeholder. */
 export const REF_START = /\{\s*REF(?:-OVERRIDE\b|\s+[\w.\-/])/y;
 
-/** `{ REF BEGIN id }` / `{ REF-OVERRIDE BEGIN id }`: group 1 the keyword, group 2 the id (absent if not written). */
-export const REF_BEGIN = new RegExp(`\\{\\s*(REF|REF-OVERRIDE)\\s+BEGIN(?:\\s+(${SECTION_ID}))?\\s*\\}`, "y");
+/**
+ * `{ REF BEGIN id }` / `{ REF-OVERRIDE BEGIN id }`, optionally with `| NAME=value ...`:
+ * group 1 the keyword, group 2 the id (absent if not written), group 3 the props.
+ */
+export const REF_BEGIN = new RegExp(`\\{\\s*(REF|REF-OVERRIDE)\\s+BEGIN(?:\\s+(${SECTION_ID}))?${REF_PROPS}\\s*\\}`, "y");
 
 /** `{ REF END id }`, with either keyword: group 1 the id (absent if not written). */
 export const REF_END = new RegExp(`\\{\\s*REF(?:-OVERRIDE)?\\s+END(?:\\s+(${SECTION_ID}))?\\s*\\}`, "y");

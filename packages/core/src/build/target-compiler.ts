@@ -43,7 +43,7 @@ export class TargetCompiler {
       this.report(error!, ref);
       return [];
     }
-    const props = this.propsFor(section, ref);
+    const props = this.propsFor(section, ref.props);
     const here: Report = (message) => this.report(message, ref);
     return [this.renderSection(section, props, ref, [], this.entrySlots(section, ref, props), here)];
   }
@@ -71,7 +71,8 @@ export class TargetCompiler {
   /**
    * `{ REF id }` renders the section as if the target listed it: with its own prop layers,
    * not the including section's. `{ REF-OVERRIDE id }` lays the including section's props
-   * on top, so they win wherever both set a prop.
+   * on top, so they win wherever both set a prop. Props passed with `{ REF id | NAME="..." }`
+   * act as that include's entry props: above all of those, below config and CLI props.
    *
    * Slot content belongs to the including section and renders with its props;
    * `SLOT-INHERIT` content renders with the filled section's props first, falling back
@@ -88,8 +89,7 @@ export class TargetCompiler {
       here(`Section '${section.id}' includes itself: ${cycle}`);
       return "";
     }
-    const own = this.propsFor(section);
-    const props = ref.override ? { ...own, ...parentProps } : own;
+    const props = this.propsFor(section, ref.props, ref.override ? parentProps : undefined);
     const slots: Slots = {};
     for (const fill of ref.fills ?? []) {
       if (!this.hasSlot(section, fill.name, (message) => here(message, fill))) continue;
@@ -125,14 +125,16 @@ export class TargetCompiler {
 
   /**
    * Prop precedence, lowest → highest:
-   *   section defaults → target props → target section-entry props → config props → CLI overrides
-   * A section reached through `{ REF id }` has no entry, so no entry props.
+   *   section defaults → target props → [inherited] → entry props → config props → CLI overrides
+   * `entryProps` are a target entry's `props`, or the props a REF passes. `inherited` are the
+   * including section's props, for `REF-OVERRIDE`.
    */
-  private propsFor(section: Section, ref?: SectionRef): Props {
+  private propsFor(section: Section, entryProps?: Props, inherited?: Props): Props {
     return {
       ...section.defaults,
       ...this.target.props,
-      ...ref?.props,
+      ...inherited,
+      ...entryProps,
       ...this.project.config.props,
       ...this.options.overrides,
     };
