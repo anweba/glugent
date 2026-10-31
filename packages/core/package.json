@@ -1,6 +1,6 @@
 {
   "name": "@anweba/glugent-core",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "The Glugent library: load a project, render Markdown sections and build targets.",
   "keywords": [
     "glugent",
