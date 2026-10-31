@@ -1,5 +1,13 @@
 # @anweba/glugent-core
 
+## 0.4.1
+
+### Patch Changes
+
+- [#22](https://github.com/anweba/glugent/pull/22) [`3d5706c`](https://github.com/anweba/glugent/commit/3d5706c4d7f167dbe0be25a29a7aee12e141fd0e) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - The packages and the VS Code extension are now licensed under **MIT**: each has `"license": "MIT"` and includes the `LICENSE` file.
+
+  Each package also has a README on npm (how to install and use it, with links to the documentation, the examples, its changelog and the other packages), and a `description` and `keywords`, so it shows up in npm search.
+
 ## 0.4.0
 
 ### Minor Changes
