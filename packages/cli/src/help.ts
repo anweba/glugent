@@ -1,10 +1,11 @@
 export const HELP = `glugent - glue Markdown sections into targets (agents, docs, ...)
 
 Usage:
-  glugent build [target...] [--set KEY=VALUE]... [--config <path>] [--dry-run]
+  glugent build [target...] [--set KEY=VALUE]... [--config <path>] [--dry-run | --check]
   glugent validate [--set KEY=VALUE]... [--config <path>]
   glugent list [--config <path>]
   glugent convert <file.md>... [--force] [--dry-run]
 
 convert writes <file>.ggen.md next to each Markdown file, escaping { and } as {{ and }}.
-With no target names, build builds every target.`;
+With no target names, build builds every target.
+build --check writes nothing and fails if an output file is missing or out of date.`;

@@ -3,7 +3,7 @@ import assert from "node:assert";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { renderTemplate, scanTemplate, loadProject, compileAgent, compileTarget, validateProject } from "../index";
+import { renderTemplate, scanTemplate, loadProject, compileAgent, compileTarget, validateProject, checkBuild, writeBuild } from "../index";
 
 
 test("render: required, optional, literal braces", () => {
@@ -426,4 +426,18 @@ test("project: a missing prop in a REF value is the including section's", () => 
   assert.deepEqual(compileTarget(project, project.targets[0]).diagnostics.map((d) => d.message), [
     "Target 't': required prop 'TITLE' of section 'a' has no value",
   ]);
+});
+
+test("build: checkBuild compares a result with its output file", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-"));
+  fs.writeFileSync(path.join(dir, "glugent.config.json"), "{}");
+  fs.writeFileSync(path.join(dir, "s.ggen.md"), "text");
+  fs.writeFileSync(path.join(dir, "t.agent.ggen.json"), JSON.stringify({ name: "t", sections: ["s"] }));
+  const project = loadProject(path.join(dir, "glugent.config.json"));
+  const result = compileTarget(project, project.targets[0]);
+  assert.equal(checkBuild(result), "missing");
+  writeBuild(result);
+  assert.equal(checkBuild(result), "current");
+  fs.writeFileSync(result.outputFile, "text");
+  assert.equal(checkBuild(result), "stale"); // the build ends with a newline
 });
