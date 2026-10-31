@@ -1,0 +1,6 @@
+{
+  "$schema": "../../../packages/schemas/target.schema.json",
+  "name": "reviewer",
+  "props": { "ROLE": "reviewer" },
+  "sections": ["identity", "rules", "roles/reviewer"]
+}

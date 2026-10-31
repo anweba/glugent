@@ -2,12 +2,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Extension: try on examples/basic",
+      "name": "Extension: try on examples/09-team",
       "type": "extensionHost",
       "request": "launch",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode",
-        "${workspaceFolder}/examples/basic"
+        "${workspaceFolder}/examples/09-team"
       ],
       "outFiles": ["${workspaceFolder}/packages/vscode/dist/**/*.js"],
       "preLaunchTask": "build"

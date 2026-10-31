@@ -1,0 +1,5 @@
+{
+  "name": "backend",
+  "props": { "PACKAGE_MANAGER": "pnpm" },
+  "sections": ["roles/backend"]
+}

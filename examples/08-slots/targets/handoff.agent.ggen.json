@@ -1,0 +1,13 @@
+{
+  "name": "handoff",
+  "sections": [
+    {
+      "use": "blocks/step",
+      "props": { "OWNER": "the on-call engineer" },
+      "slots": {
+        "default": "Hand the release over to {OWNER}.",
+        "check": "{ REF checks/handoff }"
+      }
+    }
+  ]
+}

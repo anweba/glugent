@@ -1,0 +1,6 @@
+{
+  "$schema": "../../../packages/schemas/target.schema.json",
+  "name": "writer",
+  "props": { "ROLE": "technical writer" },
+  "sections": ["base/identity", "base/rules", "roles/writer"]
+}

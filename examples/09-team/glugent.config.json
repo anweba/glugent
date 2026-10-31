@@ -1,0 +1,4 @@
+{
+  "props": { "PROJECT": "Acme Shop", "REPO": "github.com/acme/shop" },
+  "outDir": "output"
+}

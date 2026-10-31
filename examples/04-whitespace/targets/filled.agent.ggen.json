@@ -1,0 +1,11 @@
+{
+  "name": "filled",
+  "props": {
+    "WEEK": 42,
+    "EMOJI": "🚀",
+    "LABEL": "(release week)",
+    "NOTE": "Mention the new checkout flow by name.",
+    "BLOCKERS": "the payment sandbox is down"
+  },
+  "sections": ["update"]
+}

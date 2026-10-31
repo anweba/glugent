@@ -1,0 +1,11 @@
+{
+  "$schema": "../../packages/schemas/glugent-config.schema.json",
+  "sections": {
+    "root": "library",
+    "include": ["library/**/*.ggen.md"],
+    "exclude": ["library/drafts/**"]
+  },
+  "targets": { "include": ["targets/*.ggen.json"] },
+  "props": { "PROJECT": "Acme Shop" },
+  "outDir": "output"
+}
