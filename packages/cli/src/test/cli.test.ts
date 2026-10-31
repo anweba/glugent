@@ -109,3 +109,38 @@ test("convert escapes braces, keeps frontmatter, refuses to overwrite", () => {
   assert.equal(run(dir, "convert", "a.md", "--force").code, 0);
   assert.equal(run(dir, "convert", "a.ggen.md").code, 1);
 });
+
+test("build --check writes nothing and fails when an output is missing or out of date", () => {
+  const dir = project({ "s.ggen.md": "Hello {NAME?\"you\"}!", "a.agent.ggen.json": agent("alpha", ["s"]), "b.agent.ggen.json": agent("beta", ["s"]) });
+  const alpha = path.join(dir, "dist/agents/alpha.md");
+
+  const before = run(dir, "build", "--check");
+  assert.equal(before.code, 1);
+  assert.match(before.err, /✗ alpha → dist\/agents\/alpha\.md \(missing\)/);
+  assert.match(before.err, /Run 'glugent build' to update/);
+  assert.equal(fs.existsSync(path.join(dir, "dist")), false);
+
+  assert.equal(run(dir, "build").code, 0);
+  const current = run(dir, "build", "--check");
+  assert.equal(current.code, 0);
+  assert.match(current.out, /✓ alpha → dist\/agents\/alpha\.md \(up to date\)/);
+  assert.match(current.out, /✓ beta → dist\/agents\/beta\.md \(up to date\)/);
+
+  fs.writeFileSync(alpha, "edited by hand\n");
+  const stale = run(dir, "build", "--check");
+  assert.equal(stale.code, 1);
+  assert.match(stale.err, /✗ alpha → dist\/agents\/alpha\.md \(out of date\)/);
+  assert.match(stale.out, /✓ beta .*\(up to date\)/);
+  assert.equal(fs.readFileSync(alpha, "utf8"), "edited by hand\n"); // --check never writes
+
+  assert.equal(run(dir, "build", "beta", "--check").code, 0); // only the named targets
+  assert.equal(run(dir, "build", "beta", "--check", "--set", "NAME=Bob").code, 1); // --set changes what is expected
+});
+
+test("build --check reports build errors, not 'out of date'", () => {
+  const dir = project({ "s.ggen.md": "{NEED}", "a.agent.ggen.json": agent("alpha", ["s"]) });
+  const r = run(dir, "build", "--check");
+  assert.equal(r.code, 1);
+  assert.match(r.err, /required prop 'NEED'/);
+  assert.doesNotMatch(r.err, /out of date|Run 'glugent build'/);
+});

@@ -27,6 +27,7 @@
     "release:maintenance": "npm run build && changeset publish --tag maintenance",
     "targets:validate": "node packages/cli/bin/glugent.js validate -c glugent.config.json",
     "targets:build": "node packages/cli/bin/glugent.js build -c glugent.config.json",
+    "targets:check": "node packages/cli/bin/glugent.js build --check -c glugent.config.json",
     "docs:build": "node packages/cli/bin/glugent.js build readme contributing -c glugent.config.json"
   },
   "devDependencies": {

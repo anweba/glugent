@@ -10,6 +10,8 @@ export class Arguments {
   overrides: Props = {};
   config?: string;
   dryRun = false;
+  /** `build --check`: compare with the files on disk instead of writing them. */
+  check = false;
   force = false;
 
   static parse(argv: string[]): Arguments {
@@ -19,6 +21,7 @@ export class Arguments {
       if (arg === "--set") args.addOverride(argv[++i] ?? "");
       else if (arg === "--config" || arg === "-c") args.config = argv[++i];
       else if (arg === "--dry-run") args.dryRun = true;
+      else if (arg === "--check") args.check = true;
       else if (arg === "--force") args.force = true;
       else if (arg === "-h" || arg === "--help") args.command = "help";
       else if (!args.command) args.command = arg;
