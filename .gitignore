@@ -3,3 +3,4 @@ dist
 *.vsix
 packages/vscode/schemas
 out-test
+/agents

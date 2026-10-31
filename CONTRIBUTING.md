@@ -1,3 +1,5 @@
+<!-- Generated from glugent-agents by `npm run docs:build`. Edit the sections in glugent-agents/sections, not this file. -->
+
 # Contributing
 
 ## Development
@@ -7,7 +9,7 @@ packages/
   core/     @anweba/glugent-core  – config, discovery, parsing, validation, compilation (single source of truth)
   cli/      @anweba/glugent-cli   – thin wrapper: `glugent build|validate|list`
   vscode/   glugent-vscode – thin wrapper: highlighting, diagnostics, completion, hover, build commands
-  schemas/  JSON Schemas for glugent.config.json and agent files
+  schemas/  JSON Schemas for glugent.config.json and target files
 examples/basic/
 ```
 
@@ -16,8 +18,8 @@ The CLI and the extension both call `@anweba/glugent-core`; nothing is implement
 | Folder | Classes | Job |
 |---|---|---|
 | `template/` | `TemplateScanner`, `ConditionParser`, `TemplateRenderer`, `TemplateAnalyzer` | the template language: source → pieces → text, or placeholders and errors for editors (`grammar.ts` holds the regular expressions) |
-| `project/` | `ProjectLoader`, `SectionParser`, `AgentParser`, `SectionResolver` | read the config, sections and agents from disk |
-| `build/` | `AgentCompiler`, `ProjectValidator` | glue an agent's sections together, validate, write the output |
+| `project/` | `ProjectLoader`, `SectionParser`, `TargetParser`, `SectionResolver` | read the config, sections and targets from disk |
+| `build/` | `TargetCompiler`, `ProjectValidator` | glue a target's sections together, validate, write the output |
 
 The extension (`packages/vscode/src`) is a set of small `Feature` classes, each registering itself with VS Code; `extension.ts` only wires them together:
 

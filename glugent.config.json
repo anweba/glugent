@@ -1,0 +1,6 @@
+{
+  "sections": { "include": ["glugent-agents/sections/**/*.ggen.md"], "root": "glugent-agents/sections" },
+  "targets": { "include": ["glugent-agents/targets/*.{target,agent,doc}.ggen.json"] },
+  "props": { "PROJECT": "Glugent" },
+  "outDir": "agents"
+}
