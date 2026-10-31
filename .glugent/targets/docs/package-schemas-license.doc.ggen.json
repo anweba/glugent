@@ -1,0 +1,5 @@
+{
+  "name": "package-schemas-license",
+  "output": "packages/schemas/LICENSE",
+  "sections": ["docs/license"]
+}

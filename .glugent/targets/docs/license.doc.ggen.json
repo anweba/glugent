@@ -1,0 +1,5 @@
+{
+  "name": "license",
+  "output": "LICENSE",
+  "sections": ["docs/license"]
+}

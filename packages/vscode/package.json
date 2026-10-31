@@ -3,6 +3,7 @@
   "private": true,
   "displayName": "Glugent",
   "description": "Syntax highlighting, diagnostics, completion and build commands for Glugent sections and targets.",
+  "license": "MIT",
   "version": "0.3.0",
   "repository": {
     "type": "git",

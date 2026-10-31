@@ -1,0 +1,5 @@
+{
+  "name": "package-vscode-license",
+  "output": "packages/vscode/LICENSE",
+  "sections": ["docs/license"]
+}
