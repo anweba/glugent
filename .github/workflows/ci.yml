@@ -26,3 +26,13 @@ jobs:
       # The Version Packages PR is exempt: it consumes the changesets.
       - if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
         run: npx changeset status --since=origin/${{ github.base_ref }}
+      # The Version Packages PR must have consumed every changeset, including any that
+      # reached it by merging the base branch in, so merging it releases everything pending.
+      - if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'changeset-release/')
+        run: |
+          pending=$(find .changeset -maxdepth 1 -name '*.md' ! -name README.md)
+          if [ -n "$pending" ]; then
+            echo "::error::Changesets not versioned yet; wait for the Release workflow to update this PR:"
+            echo "$pending"
+            exit 1
+          fi
