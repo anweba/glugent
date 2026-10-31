@@ -12,6 +12,7 @@
   },
   "files": [
     "glugent-config.schema.json",
+    "target.schema.json",
     "agent.schema.json"
   ],
   "publishConfig": {

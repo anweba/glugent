@@ -14,9 +14,18 @@
       },
       "additionalProperties": false
     },
+    "targets": {
+      "type": "object",
+      "description": "Where target definition files (JSON) live: `*.target.ggen.json`, `*.agent.ggen.json` or `*.doc.ggen.json` by default.",
+      "properties": {
+        "include": { "type": "array", "items": { "type": "string" }, "default": ["**/*.{target,agent,doc}.ggen.json"] },
+        "exclude": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
     "agents": {
       "type": "object",
-      "description": "Where agent definition files (JSON) live.",
+      "description": "Deprecated alias of `targets`; both are read and merged.",
       "properties": {
         "include": { "type": "array", "items": { "type": "string" }, "default": ["**/*.agent.ggen.json"] },
         "exclude": { "type": "array", "items": { "type": "string" } }

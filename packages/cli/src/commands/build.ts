@@ -1,45 +1,45 @@
-import { AgentDef, compileAgent, Project, writeBuild } from "@anweba/glugent-core";
+import { Target, compileTarget, Project, writeBuild } from "@anweba/glugent-core";
 import { CliError } from "../errors";
 import { Reporter } from "../reporter";
 import { Command } from "./command";
 
-/** `glugent build [agent...]`: compile agents and write their output files. */
+/** `glugent build [target...]`: compile targets and write their output files. */
 export class BuildCommand extends Command {
   run(project: Project): number {
-    const agents = this.selectAgents(project);
+    const targets = this.selectTargets(project);
 
     this.out.diagnostics(project.diagnostics);
     let ok = !Reporter.hasErrors(project.diagnostics);
-    for (const agent of agents) {
-      if (!this.build(project, agent)) ok = false;
+    for (const target of targets) {
+      if (!this.build(project, target)) ok = false;
     }
     return ok ? 0 : 1;
   }
 
-  /** The agents named on the command line, or all of them. */
-  private selectAgents(project: Project): AgentDef[] {
-    const agents = this.args.names.length ? this.args.names.map((name) => this.find(project, name)) : project.agents;
-    if (!agents.length) throw new CliError("no agents found");
-    return agents;
+  /** The targets named on the command line, or all of them. */
+  private selectTargets(project: Project): Target[] {
+    const targets = this.args.names.length ? this.args.names.map((name) => this.find(project, name)) : project.targets;
+    if (!targets.length) throw new CliError("no targets found");
+    return targets;
   }
 
-  private find(project: Project, name: string): AgentDef {
-    const agent = project.agents.find((a) => a.name === name);
-    if (!agent) throw new CliError(`unknown agent '${name}'`);
-    return agent;
+  private find(project: Project, name: string): Target {
+    const target = project.targets.find((t) => t.name === name);
+    if (!target) throw new CliError(`unknown target '${name}'`);
+    return target;
   }
 
-  /** Builds one agent; returns false (and writes nothing) if it has errors. */
-  private build(project: Project, agent: AgentDef): boolean {
-    const result = compileAgent(project, agent, { overrides: this.args.overrides });
+  /** Builds one target; returns false (and writes nothing) if it has errors. */
+  private build(project: Project, target: Target): boolean {
+    const result = compileTarget(project, target, { overrides: this.args.overrides });
     this.out.diagnostics(result.diagnostics);
     if (Reporter.hasErrors(result.diagnostics)) {
-      this.out.error(`✗ ${agent.name} (not written)`);
+      this.out.error(`✗ ${target.name} (not written)`);
       return false;
     }
     if (!this.args.dryRun) writeBuild(result);
     const note = this.args.dryRun ? " (dry run)" : "";
-    this.out.info(`✓ ${agent.name} → ${this.out.relative(result.outputFile)}${note}`);
+    this.out.info(`✓ ${target.name} → ${this.out.relative(result.outputFile)}${note}`);
     return true;
   }
 }

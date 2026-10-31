@@ -1,36 +1,36 @@
 import { SectionResolver, readFromDisk } from "../project";
 import { renderTemplate } from "../template";
-import { AgentDef, BuildResult, Diagnostic, Project, Props, Section, SectionRef } from "../types";
-import { AgentFile } from "./agent-file";
+import { Target, BuildResult, Diagnostic, Project, Props, Section, SectionRef } from "../types";
+import { TargetFile } from "./target-file";
 import { BuildOptions } from "./options";
 import { outputPathFor } from "./output-path";
 
-/** Glues an agent's sections together into one Markdown document. */
-export class AgentCompiler {
+/** Glues a target's sections together into one Markdown document. */
+export class TargetCompiler {
   private readonly diagnostics: Diagnostic[] = [];
   private readonly resolver: SectionResolver;
-  private readonly agentFile: AgentFile;
+  private readonly targetFile: TargetFile;
 
   constructor(
     private readonly project: Project,
-    private readonly agent: AgentDef,
+    private readonly target: Target,
     private readonly options: BuildOptions = {},
   ) {
     this.resolver = new SectionResolver(project);
-    this.agentFile = new AgentFile((options.readFile ?? readFromDisk)(agent.file));
+    this.targetFile = new TargetFile((options.readFile ?? readFromDisk)(target.file));
   }
 
   compile(): BuildResult {
-    const parts = this.agent.sections.flatMap((ref) => this.renderEntry(ref));
+    const parts = this.target.sections.flatMap((ref) => this.renderEntry(ref));
     return {
-      agent: this.agent,
-      outputFile: outputPathFor(this.project, this.agent),
+      target: this.target,
+      outputFile: outputPathFor(this.project, this.target),
       content: parts.filter(Boolean).join("\n\n") + "\n",
       diagnostics: this.diagnostics,
     };
   }
 
-  /** Renders one section entry of the agent; unknown sections are reported and skipped. */
+  /** Renders one section entry of the target; unknown sections are reported and skipped. */
   private renderEntry(ref: SectionRef): string[] {
     const { section, error } = this.resolver.resolve(ref.use);
     if (!section) {
@@ -39,19 +39,19 @@ export class AgentCompiler {
     }
     const { text, missing } = renderTemplate(section.body, this.propsFor(section, ref), section.bodyLineOffset);
     for (const m of missing) {
-      this.report(`Agent '${this.agent.name}': required prop '${m.name}' of section '${section.id}' has no value`, ref);
+      this.report(`Target '${this.target.name}': required prop '${m.name}' of section '${section.id}' has no value`, ref);
     }
     return [text.trim()];
   }
 
   /**
    * Prop precedence, lowest → highest:
-   *   section defaults → agent props → agent section-entry props → config props → CLI overrides
+   *   section defaults → target props → target section-entry props → config props → CLI overrides
    */
   private propsFor(section: Section, ref: SectionRef): Props {
     return {
       ...section.defaults,
-      ...this.agent.props,
+      ...this.target.props,
       ...ref.props,
       ...this.project.config.props,
       ...this.options.overrides,
@@ -59,10 +59,13 @@ export class AgentCompiler {
   }
 
   private report(message: string, ref: SectionRef): void {
-    this.diagnostics.push({ severity: "error", message, file: this.agent.file, ...this.agentFile.locate(ref.use) });
+    this.diagnostics.push({ severity: "error", message, file: this.target.file, ...this.targetFile.locate(ref.use) });
   }
 }
 
-export function compileAgent(project: Project, agent: AgentDef, options: BuildOptions = {}): BuildResult {
-  return new AgentCompiler(project, agent, options).compile();
+export function compileTarget(project: Project, target: Target, options: BuildOptions = {}): BuildResult {
+  return new TargetCompiler(project, target, options).compile();
 }
+
+/** @deprecated Use `compileTarget`. */
+export const compileAgent = compileTarget;

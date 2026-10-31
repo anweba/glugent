@@ -1,12 +1,12 @@
 import { ProjectStore } from "../project-store";
-import { AgentBuilder } from "./agent-builder";
+import { TargetBuilder } from "./target-builder";
 import { Command } from "./command";
 
-/** Glugent: Build All Agents */
+/** Glugent: Build All Targets */
 export class BuildAllCommand extends Command {
   constructor(
     store: ProjectStore,
-    private readonly builder: AgentBuilder,
+    private readonly builder: TargetBuilder,
   ) {
     super("glugent.buildAll", store);
   }

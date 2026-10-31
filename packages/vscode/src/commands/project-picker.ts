@@ -1,9 +1,9 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { AgentDef, Project } from "@anweba/glugent-core";
+import { Target, Project } from "@anweba/glugent-core";
 import { ProjectStore } from "../project-store";
 
-/** Asks the user which project (and agent) a command should act on. */
+/** Asks the user which project (and target) a command should act on. */
 export class ProjectPicker {
   constructor(private readonly store: ProjectStore) {}
 
@@ -19,12 +19,12 @@ export class ProjectPicker {
     return (await vscode.window.showQuickPick(items))?.project;
   }
 
-  async agent(project: Project): Promise<AgentDef | undefined> {
-    const items = project.agents.map((agent) => ({
-      label: agent.name,
-      description: path.relative(project.root, agent.file),
-      agent,
+  async target(project: Project): Promise<Target | undefined> {
+    const items = project.targets.map((target) => ({
+      label: target.name,
+      description: path.relative(project.root, target.file),
+      target,
     }));
-    return (await vscode.window.showQuickPick(items, { placeHolder: "Agent to build" }))?.agent;
+    return (await vscode.window.showQuickPick(items, { placeHolder: "Target to build" }))?.target;
   }
 }

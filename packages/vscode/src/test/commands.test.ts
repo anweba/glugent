@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert";
 import * as fs from "fs";
 import * as path from "path";
-import { AgentBuilder } from "../commands/agent-builder";
-import { BuildAgentCommand } from "../commands/build-agent";
+import { BuildTargetCommand } from "../commands/build-target";
+import { TargetBuilder } from "../commands/target-builder";
 import { BuildAllCommand } from "../commands/build-all";
 import { ValidateCommand } from "../commands/validate";
 import { DiagnosticsPublisher } from "../diagnostics-publisher";
@@ -17,7 +17,7 @@ function setup(files: Record<string, string>) {
   state.configFiles = [configOf(root)];
   const store = new ProjectStore(new DiagnosticsPublisher());
   const out = (name: string) => path.join(root, "dist/agents", `${name}.md`);
-  return { root, store, builder: new AgentBuilder(), out };
+  return { root, store, builder: new TargetBuilder(), out };
 }
 
 const good = { "s.ggen.md": "Hello", "a.agent.ggen.json": agentJson("alpha", ["s"]), "b.agent.ggen.json": agentJson("beta", ["s"]) };
@@ -25,38 +25,38 @@ const lastMessage = () => state.messages[state.messages.length - 1];
 
 test("commands register under their palette ids", () => {
   const { store, builder } = setup(good);
-  [new BuildAllCommand(store, builder), new BuildAgentCommand(store, builder), new ValidateCommand(store)].forEach((c) => c.register());
-  assert.deepEqual([...state.commands.keys()].sort(), ["glugent.buildAgent", "glugent.buildAll", "glugent.validate"]);
+  [new BuildAllCommand(store, builder), new BuildTargetCommand(store, builder), new ValidateCommand(store)].forEach((c) => c.register());
+  assert.deepEqual([...state.commands.keys()].sort(), ["glugent.buildAll", "glugent.buildTarget", "glugent.validate"]);
 });
 
-test("build all writes every agent and reports the count", async () => {
+test("build all writes every target and reports the count", async () => {
   const { store, builder, out } = setup(good);
   await new BuildAllCommand(store, builder).run();
   assert.equal(fs.readFileSync(out("alpha"), "utf8"), "Hello\n");
   assert.ok(fs.existsSync(out("beta")));
-  assert.deepEqual(lastMessage(), { level: "info", text: "Glugent: built 2 agents." });
+  assert.deepEqual(lastMessage(), { level: "info", text: "Glugent: built 2 targets." });
 });
 
-test("build all skips agents with errors and says so", async () => {
+test("build all skips targets with errors and says so", async () => {
   const { store, builder, out } = setup({ ...good, "s.ggen.md": "{NEED}" });
   await new BuildAllCommand(store, builder).run();
   assert.equal(fs.existsSync(out("alpha")), false);
   assert.ok(state.messages.some((m) => m.level === "error" && m.text.includes("'alpha' has errors")));
 });
 
-test("build agent builds only the chosen agent", async () => {
+test("build target builds only the chosen target", async () => {
   const { store, builder, out } = setup(good);
   state.pick = (items) => items.find((i) => i.label === "beta");
-  await new BuildAgentCommand(store, builder).run();
+  await new BuildTargetCommand(store, builder).run();
   assert.equal(fs.existsSync(out("alpha")), false);
   assert.ok(fs.existsSync(out("beta")));
-  assert.equal(lastMessage().text, "Glugent: built 1 agent.");
+  assert.equal(lastMessage().text, "Glugent: built 1 target.");
 });
 
-test("build agent does nothing when the picker is dismissed", async () => {
+test("build target does nothing when the picker is dismissed", async () => {
   const { store, builder, out } = setup(good);
   state.pick = () => undefined;
-  await new BuildAgentCommand(store, builder).run();
+  await new BuildTargetCommand(store, builder).run();
   assert.equal(fs.existsSync(out("alpha")), false);
   assert.equal(state.messages.length, 0);
 });

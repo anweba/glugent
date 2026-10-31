@@ -40,8 +40,8 @@ export class PropHover implements Feature, vscode.HoverProvider {
     if (section && p.name in section.defaults) line(`Section default: \`${section.defaults[p.name]}\``);
     if (p.name in configProps) line(`Config value: \`${configProps[p.name]}\``);
 
-    const agents = project.agents.filter((a) => a.props && p.name in a.props);
-    if (agents.length) md.appendMarkdown(`Set by agents: ${agents.map((a) => `\`${a.name}\``).join(", ")}`);
+    const targets = project.targets.filter((t) => t.props && p.name in t.props);
+    if (targets.length) md.appendMarkdown(`Set by targets: ${targets.map((a) => `\`${a.name}\``).join(", ")}`);
     return md;
   }
 }

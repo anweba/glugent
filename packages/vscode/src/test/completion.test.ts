@@ -47,7 +47,7 @@ test("prop completion registers on '{' for glugent files", () => {
   assert.deepEqual(state.providers[0].selector, { language: "glugent" });
 });
 
-test("section completion suggests section ids inside an agent's sections list", () => {
+test("section completion suggests section ids inside a target's sections list", () => {
   const { root, store } = setup();
   const file = `${root}/a.agent.ggen.json`;
   const doc = documentAt(file, "json");
