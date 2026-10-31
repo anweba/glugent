@@ -1,0 +1,5 @@
+{
+  "name": "package-cli-license",
+  "output": "packages/cli/LICENSE",
+  "sections": ["docs/license"]
+}

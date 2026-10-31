@@ -1,6 +1,17 @@
 {
   "name": "glugent",
   "version": "0.3.0",
+  "description": "Glue Markdown sections into AI agents, docs and other targets: the Glugent command line.",
+  "keywords": [
+    "glugent",
+    "markdown",
+    "templates",
+    "ai-agents",
+    "prompts",
+    "agent-instructions",
+    "cli"
+  ],
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/anweba/glugent.git",

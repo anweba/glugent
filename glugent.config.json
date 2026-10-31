@@ -1,6 +1,6 @@
 {
   "sections": { "include": [".glugent/sections/**/*.ggen.md"], "root": ".glugent/sections" },
   "targets": { "include": [".glugent/targets/**/*.{target,agent,doc}.ggen.json"] },
-  "props": { "PROJECT": "Glugent" },
+  "props": { "PROJECT": "Glugent", "REPO_URL": "https://github.com/anweba/glugent", "AUTHOR": "Antonín Báleš" },
   "outDir": "agents"
 }

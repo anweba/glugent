@@ -1,6 +1,16 @@
 {
   "name": "@anweba/glugent-core",
   "version": "0.3.0",
+  "description": "The Glugent library: load a project, render Markdown sections and build targets.",
+  "keywords": [
+    "glugent",
+    "markdown",
+    "templates",
+    "ai-agents",
+    "prompts",
+    "agent-instructions"
+  ],
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/anweba/glugent.git",

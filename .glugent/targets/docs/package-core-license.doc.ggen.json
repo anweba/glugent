@@ -1,0 +1,5 @@
+{
+  "name": "package-core-license",
+  "output": "packages/core/LICENSE",
+  "sections": ["docs/license"]
+}

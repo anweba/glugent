@@ -1,0 +1,5 @@
+{
+  "name": "package-schemas",
+  "output": "packages/schemas/README.md",
+  "sections": ["docs/packages/schemas"]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "package-cli",
+  "output": "packages/cli/README.md",
+  "sections": ["docs/packages/cli"]
+}

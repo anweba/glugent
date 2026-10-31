@@ -2,6 +2,11 @@
 
 # Glugent
 
+[![CI](https://github.com/anweba/glugent/actions/workflows/ci.yml/badge.svg)](https://github.com/anweba/glugent/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/glugent)](https://www.npmjs.com/package/glugent)
+[![downloads](https://img.shields.io/npm/dm/glugent)](https://www.npmjs.com/package/glugent)
+[![license](https://img.shields.io/github/license/anweba/glugent)](LICENSE)
+
 Glue Markdown **sections** into **targets**: agents, docs, or anything else you build from Markdown. Sections are ordinary Markdown with `{props}`; targets are small JSON files listing which sections to glue together.
 
 Use the `glugent` command-line tool to build targets, and the VS Code extension for highlighting, diagnostics and completion while you write sections.
@@ -122,3 +127,7 @@ glugent build --set ADDITIONAL_INSTRUCTIONS="Be terse."
 Features: syntax highlighting for placeholders and `if` blocks, live diagnostics (unknown section, missing required prop, stray `{` or `}`, bad JSON), completion for prop names and section ids, hover, JSON-schema validation of config and target files, and the commands *Glugent: Build All Targets / Build Target… / Validate Project*.
 
 `.ggen.md` files use the `glugent` language, which is Markdown plus Glugent tokens.
+
+## License
+
+[MIT](LICENSE) © Antonín Báleš

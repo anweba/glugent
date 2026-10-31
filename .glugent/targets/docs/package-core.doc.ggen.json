@@ -1,0 +1,5 @@
+{
+  "name": "package-core",
+  "output": "packages/core/README.md",
+  "sections": ["docs/packages/core"]
+}
