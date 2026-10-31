@@ -1,5 +1,12 @@
 # glugent
 
+## 0.4.0
+
+### Patch Changes
+
+- Updated dependencies [[`df85f1e`](https://github.com/anweba/glugent/commit/df85f1ef192bd7ed523bbd0ba27e7eada630625e), [`8058697`](https://github.com/anweba/glugent/commit/8058697279093f608596cb7669356a4f0de8d713)]:
+  - @anweba/glugent-core@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes
