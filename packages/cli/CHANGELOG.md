@@ -1,5 +1,14 @@
 # glugent
 
+## 0.4.2
+
+### Patch Changes
+
+- [#24](https://github.com/anweba/glugent/pull/24) [`2a5dace`](https://github.com/anweba/glugent/commit/2a5dace23f1427810ff360af84e24dac515abb47) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - `glugent build` and `build --check` color their results on a terminal: a green ✓ for written and up-to-date targets, failed ones with a red ✗ and yellow text, and the `Run 'glugent build'` hint in grey. Set `NO_COLOR` to turn it off, or `FORCE_COLOR=1` to keep it when the output is piped.
+
+- Updated dependencies []:
+  - @anweba/glugent-core@0.4.2
+
 ## 0.4.1
 
 ### Patch Changes
