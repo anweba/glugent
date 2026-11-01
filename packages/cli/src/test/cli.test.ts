@@ -7,10 +7,14 @@ import * as path from "path";
 
 const BIN = path.resolve(__dirname, "../../bin/glugent.js");
 
-function run(cwd: string, ...args: string[]) {
-  const r = spawnSync(process.execPath, [BIN, ...args], { cwd, encoding: "utf8" });
+/** Runs the CLI with piped output, so uncolored unless `env` asks for color. */
+function runWith(env: Record<string, string>, cwd: string, ...args: string[]) {
+  const { FORCE_COLOR, NO_COLOR, ...inherited } = process.env;
+  const r = spawnSync(process.execPath, [BIN, ...args], { cwd, encoding: "utf8", env: { ...inherited, ...env } });
   return { code: r.status, out: r.stdout, err: r.stderr };
 }
+
+const run = (cwd: string, ...args: string[]) => runWith({}, cwd, ...args);
 
 function project(files: Record<string, string>): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-cli-"));
@@ -135,6 +139,22 @@ test("build --check writes nothing and fails when an output is missing or out of
 
   assert.equal(run(dir, "build", "beta", "--check").code, 0); // only the named targets
   assert.equal(run(dir, "build", "beta", "--check", "--set", "NAME=Bob").code, 1); // --set changes what is expected
+});
+
+test("build --check colors results (green ✓, red ✗ with yellow text, grey hint) only when asked", () => {
+  const dir = project({ "s.ggen.md": "hi", "a.agent.ggen.json": agent("alpha", ["s"]) });
+  assert.match(runWith({ FORCE_COLOR: "1" }, dir, "build").out, /\x1b\[32m✓\x1b\[0m alpha → dist\/agents\/alpha\.md\n/);
+  fs.rmSync(path.join(dir, "dist"), { recursive: true });
+  const plain = run(dir, "build", "--check");
+  assert.doesNotMatch(plain.err, /\x1b\[/);
+
+  const colored = runWith({ FORCE_COLOR: "1" }, dir, "build", "--check");
+  assert.equal(colored.code, 1);
+  assert.match(colored.err, /\x1b\[31m✗\x1b\[33m alpha → dist\/agents\/alpha\.md \(missing\)\x1b\[0m/);
+  assert.match(colored.err, /\x1b\[90mRun 'glugent build' to update the files above\.\x1b\[0m/);
+
+  assert.doesNotMatch(runWith({ FORCE_COLOR: "0" }, dir, "build", "--check").err, /\x1b\[/);
+  assert.doesNotMatch(runWith({ FORCE_COLOR: "1", NO_COLOR: "1" }, dir, "build", "--check").err, /\x1b\[/);
 });
 
 test("build --check reports build errors, not 'out of date'", () => {

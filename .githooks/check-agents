@@ -4,11 +4,18 @@
 cd "$(git rev-parse --show-toplevel)" || exit 0
 [ -f packages/cli/dist/cli.js ] || exit 0 # nothing built yet: npm run build
 
-report=$(node packages/cli/bin/glugent.js build --check -c glugent.config.json 2>&1)
+# A grey hint (and the CLI's red ✗ with yellow text) on a terminal; plain text elsewhere (IDE git logs, NO_COLOR).
+grey="" reset=""
+if [ -t 1 ] && [ -z "$NO_COLOR" ]; then
+  export FORCE_COLOR=1
+  grey=$(printf '\033[90m') reset=$(printf '\033[0m')
+fi
+
+report=$(npm run --silent targets:check 2>&1)
 if [ $? -ne 0 ]; then
   echo
   echo "glugent: some built files do not match the sources of this checkout:"
   echo "$report" | grep "✗"
-  echo "Rebuild them with: npm run targets:build (run npm run build first if the CLI changed)."
+  echo "${grey}Rebuild them with: npm run targets:build (run npm run build first if the CLI changed).${reset}"
 fi
 exit 0
