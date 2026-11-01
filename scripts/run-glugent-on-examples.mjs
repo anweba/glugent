@@ -36,6 +36,8 @@ function leftovers(config, outDir) {
   const extra = readdirSync(outDir, { recursive: true })
     .map((file) => resolve(outDir, file))
     .filter((file) => statSync(file).isFile() && !written.has(file));
-  for (const file of extra) console.error(`✗ ${relative(".", file)} (no target writes it)`);
+  const { colorEnabled } = createRequire(import.meta.url)("../packages/cli/dist/reporter.js");
+  const [red, yellow, reset] = colorEnabled() ? ["\x1b[31m", "\x1b[33m", "\x1b[0m"] : ["", "", ""];
+  for (const file of extra) console.error(`${red}✗${yellow} ${relative(".", file)} (no target writes it)${reset}`);
   return extra.length > 0;
 }

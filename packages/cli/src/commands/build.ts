@@ -20,7 +20,7 @@ export class BuildCommand extends Command {
       else if (!this.args.check) this.write(result);
       else if (!this.check(result)) outdated = true;
     }
-    if (outdated) this.out.error("Run 'glugent build' to update the files above.");
+    if (outdated) this.out.hint("Run 'glugent build' to update the files above.");
     return ok && !outdated ? 0 : 1;
   }
 
@@ -42,7 +42,7 @@ export class BuildCommand extends Command {
     const result = compileTarget(project, target, { overrides: this.args.overrides });
     this.out.diagnostics(result.diagnostics);
     if (Reporter.hasErrors(result.diagnostics)) {
-      this.out.error(`✗ ${target.name} (not written)`);
+      this.out.failure(`${target.name} (not written)`);
       return undefined;
     }
     return result;
@@ -51,15 +51,15 @@ export class BuildCommand extends Command {
   private write(result: BuildResult): void {
     if (!this.args.dryRun) writeBuild(result);
     const note = this.args.dryRun ? " (dry run)" : "";
-    this.out.info(`✓ ${result.target.name} → ${this.out.relative(result.outputFile)}${note}`);
+    this.out.success(`${result.target.name} → ${this.out.relative(result.outputFile)}${note}`);
   }
 
   /** `--check`: true when the file on disk is what the build would write. */
   private check(result: BuildResult): boolean {
     const status = checkBuild(result);
     const line = `${result.target.name} → ${this.out.relative(result.outputFile)}`;
-    if (status === "current") this.out.info(`✓ ${line} (up to date)`);
-    else this.out.error(`✗ ${line} (${status === "missing" ? "missing" : "out of date"})`);
+    if (status === "current") this.out.success(`${line} (up to date)`);
+    else this.out.failure(`${line} (${status === "missing" ? "missing" : "out of date"})`);
     return status === "current";
   }
 }
