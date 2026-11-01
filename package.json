@@ -30,8 +30,8 @@
     "targets:validate": "node packages/cli/bin/glugent.js validate -c glugent.config.json",
     "targets:build": "node packages/cli/bin/glugent.js build -c glugent.config.json",
     "targets:check": "node packages/cli/bin/glugent.js build --check -c glugent.config.json",
-    "docs:build": "node packages/cli/bin/glugent.js build readme contributing package-cli package-core package-schemas license package-cli-license package-core-license package-schemas-license package-vscode-license -c glugent.config.json",
-    "docs:check": "node packages/cli/bin/glugent.js build readme contributing package-cli package-core package-schemas license package-cli-license package-core-license package-schemas-license package-vscode-license --check -c glugent.config.json",
+    "docs:build": "node packages/cli/bin/glugent.js build readme contributing package-cli package-core package-schemas package-vscode license package-cli-license package-core-license package-schemas-license package-vscode-license -c glugent.config.json",
+    "docs:check": "node packages/cli/bin/glugent.js build readme contributing package-cli package-core package-schemas package-vscode license package-cli-license package-core-license package-schemas-license package-vscode-license --check -c glugent.config.json",
     "verify": "npm run build && npm test && npm run docs:check && npm run examples:check",
     "prepare": "git config core.hooksPath .githooks || exit 0"
   },

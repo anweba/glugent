@@ -3,6 +3,8 @@ description: README of the glugent package (the CLI) on npm
 ---
 { REF repo/generated-note }
 
+{ REF parts/logo }
+
 { REF BEGIN common/h1 | HEAD="glugent" }
 The command-line tool of [{PROJECT}]({REPO_URL}). It glues Markdown **sections** into **targets**: agents, docs, or anything else you build from Markdown.
 { REF END common/h1 }

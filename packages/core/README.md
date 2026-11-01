@@ -1,5 +1,7 @@
 <!-- Generated from .glugent by `npm run docs:build`. Edit the sections in .glugent/sections, not this file. -->
 
+<p align="center"><img src="https://raw.githubusercontent.com/anweba/glugent/main/packages/vscode/icons/glugent-128.png" alt="Glugent logo" width="96"></p>
+
 # @anweba/glugent-core
 
 The library behind [Glugent](https://github.com/anweba/glugent): it loads a project, renders sections and builds targets. The `glugent` CLI and the VS Code extension are built on it. Use it to build targets from your own code; to build from the command line, install [`glugent`](https://www.npmjs.com/package/glugent) instead.
