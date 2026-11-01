@@ -3,6 +3,8 @@ description: README of @anweba/glugent-schemas (the JSON Schemas) on npm
 ---
 { REF repo/generated-note }
 
+{ REF parts/logo }
+
 { REF BEGIN common/h1 | HEAD="@anweba/glugent-schemas" }
 JSON Schemas for the files of [{PROJECT}]({REPO_URL}), for completion and validation in your editor.
 { REF END common/h1 }

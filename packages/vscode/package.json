@@ -14,7 +14,8 @@
   "bugs": {
     "url": "https://github.com/anweba/glugent/issues"
   },
-  "publisher": "glugent",
+  "publisher": "anweba",
+  "icon": "icons/glugent-128.png",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -39,7 +40,11 @@
         "filenamePatterns": [
           "*.ggen.md"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/ggen.svg",
+          "dark": "./icons/ggen.svg"
+        }
       }
     ],
     "grammars": [
@@ -104,6 +109,8 @@
   "devDependencies": {
     "@anweba/glugent-core": "0.4.2",
     "@types/vscode": "^1.85.0",
-    "esbuild": "^0.24.0"
+    "@vscode/vsce": "^4.1.0",
+    "esbuild": "^0.24.0",
+    "ovsx": "^1.3.0"
   }
 }

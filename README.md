@@ -1,5 +1,7 @@
 <!-- Generated from .glugent by `npm run docs:build`. Edit the sections in .glugent/sections, not this file. -->
 
+<p align="center"><img src="https://raw.githubusercontent.com/anweba/glugent/main/packages/vscode/icons/glugent-128.png" alt="Glugent logo" width="96"></p>
+
 # Glugent
 
 [![CI](https://github.com/anweba/glugent/actions/workflows/ci.yml/badge.svg)](https://github.com/anweba/glugent/actions/workflows/ci.yml)
@@ -126,7 +128,7 @@ glugent build --set ADDITIONAL_INSTRUCTIONS="Be terse."
 
 Features: syntax highlighting for placeholders and `if` blocks, live diagnostics (unknown section, missing required prop, stray `{` or `}`, bad JSON), completion for prop names and section ids, hover, JSON-schema validation of config and target files, and the commands *Glugent: Build All Targets / Build Target… / Validate Project*.
 
-`.ggen.md` files use the `glugent` language, which is Markdown plus Glugent tokens.
+`.ggen.md` files use the `glugent` language, which is Markdown plus Glugent tokens, and show the Glugent file icon unless your icon theme has its own icon for them.
 
 ## License
 

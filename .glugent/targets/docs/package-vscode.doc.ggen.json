@@ -1,0 +1,5 @@
+{
+  "name": "package-vscode",
+  "output": "packages/vscode/README.md",
+  "sections": ["docs/packages/vscode"]
+}

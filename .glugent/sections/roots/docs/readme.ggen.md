@@ -3,6 +3,8 @@ description: README.md of the repository
 ---
 { REF repo/generated-note }
 
+{ REF parts/logo }
+
 { REF BEGIN common/h1 | HEAD="Glugent" }
 [![CI]({REPO_URL}/actions/workflows/ci.yml/badge.svg)]({REPO_URL}/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/glugent)](https://www.npmjs.com/package/glugent)

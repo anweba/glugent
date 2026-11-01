@@ -1,5 +1,7 @@
 <!-- Generated from .glugent by `npm run docs:build`. Edit the sections in .glugent/sections, not this file. -->
 
+<p align="center"><img src="https://raw.githubusercontent.com/anweba/glugent/main/packages/vscode/icons/glugent-128.png" alt="Glugent logo" width="96"></p>
+
 # glugent
 
 The command-line tool of [Glugent](https://github.com/anweba/glugent). It glues Markdown **sections** into **targets**: agents, docs, or anything else you build from Markdown.

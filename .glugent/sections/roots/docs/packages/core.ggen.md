@@ -3,6 +3,8 @@ description: README of @anweba/glugent-core (the library) on npm
 ---
 { REF repo/generated-note }
 
+{ REF parts/logo }
+
 { REF BEGIN common/h1 | HEAD="@anweba/glugent-core" }
 The library behind [{PROJECT}]({REPO_URL}): it loads a project, renders sections and builds targets. The `glugent` CLI and the VS Code extension are built on it. Use it to build targets from your own code; to build from the command line, install [`glugent`](https://www.npmjs.com/package/glugent) instead.
 { REF END common/h1 }
