@@ -4,7 +4,7 @@
   "displayName": "Glugent",
   "description": "Syntax highlighting, diagnostics, completion and build commands for Glugent sections and targets.",
   "license": "MIT",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/anweba/glugent.git",

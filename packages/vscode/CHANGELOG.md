@@ -1,5 +1,11 @@
 # glugent-vscode
 
+## 0.3.2
+
+### Patch Changes
+
+- [#26](https://github.com/anweba/glugent/pull/26) [`46324c4`](https://github.com/anweba/glugent/commit/46324c4094b1a253698c7ccd4fbf861c2081e7e3) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - The extension has its own icon, `.ggen.md` files show the Glugent file icon (unless your icon theme has its own icon for them), and the extension now has a README for its Marketplace page.
+
 ## 0.3.1
 
 ### Patch Changes
