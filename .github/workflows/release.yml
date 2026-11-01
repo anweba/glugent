@@ -16,6 +16,10 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      # "false" once every changeset is consumed: the push is the merge of a
+      # Version Packages PR (or has nothing to release), not a feature merge.
+      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,6 +36,7 @@ jobs:
       # to npm, tags the release and creates GitHub Releases from the
       # changelog entries.
       - uses: changesets/action@v1
+        id: changesets
         with:
           version: npm run version
           # Releases from release/** branches publish under the "maintenance"
@@ -39,3 +44,34 @@ jobs:
           publish: ${{ github.ref_name == 'main' && 'npm run release' || 'npm run release:maintenance' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Publishes the VS Code extension to the VS Code Marketplace and Open VSX.
+  # Runs only on main, after the Version Packages PR is merged. Its tokens
+  # live in the "Release" environment, which only main may use, and are given
+  # to the publish step alone, not to npm ci or the build. --skip-duplicate
+  # turns a release that did not bump the extension into a no-op.
+  publish-extension:
+    needs: release
+    if: github.ref_name == 'main' && needs.release.outputs.hasChangesets == 'false'
+    runs-on: ubuntu-latest
+    environment: Release
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run package -w glugent-vscode
+      - name: Publish to the VS Code Marketplace and Open VSX
+        working-directory: packages/vscode
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          vsix=$(ls glugent-vscode-*.vsix)
+          npx vsce publish --packagePath "$vsix" --skip-duplicate
+          npx ovsx publish "$vsix" --skip-duplicate
