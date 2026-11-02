@@ -21,6 +21,7 @@ Keep the workflows hardened when you change them:
 
 - Each job declares its own `permissions:`; the Release workflow grants nothing by default, and only the `release` job may write or request the npm identity token.
 - Third-party actions are pinned to a commit SHA with the version in a comment; Dependabot (`.github/dependabot.yml`) opens PRs to update them. Do not switch back to tags such as `@v4`.
+- Dependabot also opens weekly PRs for npm dependencies: minor and patch updates grouped into one PR for production and one for development dependencies, majors one by one, each only once the release is at least 7 days old (14 for majors). An update within the existing range changes only `package-lock.json`; one that changes a published package's `package.json` needs a changeset, which you add to the Dependabot PR before merging it.
 - Dependencies are installed with `npm ci --ignore-scripts`, so no install script runs where a token or write access is available. If a new dependency needs its install script, find another way rather than dropping the flag.
 - `.github/CODEOWNERS` requires the owner's review for workflows, hooks, the changeset config and the `package.json` files.
 { REF END common/h2 }
