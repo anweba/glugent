@@ -1,0 +1,14 @@
+#!/bin/sh
+# Warns when the hooks in this checkout's .githooks/ differ from the installed copy that git
+# runs (.git/glugent-hooks/, see scripts/install-git-hooks.mjs). It only compares files.
+installed="$(dirname "$0")"
+checkout="$(git rev-parse --show-toplevel)/.githooks"
+[ "$(cd "$installed" && pwd -P)" = "$(cd "$checkout" 2>/dev/null && pwd -P)" ] && exit 0
+
+if ! diff -r -q "$installed" "$checkout" >/dev/null 2>&1; then
+  echo
+  echo "glugent: the git hooks in .githooks/ differ from the installed ones, which still run."
+  echo "Review the difference with: diff -r $installed .githooks"
+  echo "and, if you trust it, install them with: npm run hooks:install"
+fi
+exit 0
