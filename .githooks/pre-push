@@ -1,7 +1,10 @@
 #!/bin/sh
 # Runs what CI runs, so a failure shows up before it reaches GitHub.
 # Skip it once with: git push --no-verify
+# Like CI, this builds and tests the branch, so it runs the branch's code: only push a
+# branch you have reviewed (or push someone else's branch with --no-verify).
 cd "$(git rev-parse --show-toplevel)" || exit 1
+"$(dirname "$0")/check-hooks"
 
 if [ -n "$(git status --porcelain)" ]; then
   echo "pre-push: note: the checks run on your working tree, which has uncommitted changes."

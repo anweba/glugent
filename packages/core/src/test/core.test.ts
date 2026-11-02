@@ -3,7 +3,7 @@ import assert from "node:assert";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { renderTemplate, scanTemplate, loadProject, compileAgent, compileTarget, validateProject, checkBuild, writeBuild } from "../index";
+import { renderTemplate, scanTemplate, loadProject, compileAgent, compileTarget, validateProject, checkBuild, writeBuild, parseSection } from "../index";
 
 
 test("render: required, optional, literal braces", () => {
@@ -440,4 +440,139 @@ test("build: checkBuild compares a result with its output file", () => {
   assert.equal(checkBuild(result), "current");
   fs.writeFileSync(result.outputFile, "text");
   assert.equal(checkBuild(result), "stale"); // the build ends with a newline
+});
+
+/** A project with one section 's' and one target 't' built from it; `target` adds fields to the target file. */
+function outputProject(config: object, target: object = {}): { dir: string; project: ReturnType<typeof loadProject> } {
+  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "ggen-")));
+  fs.writeFileSync(path.join(dir, "glugent.config.json"), JSON.stringify(config));
+  fs.writeFileSync(path.join(dir, "s.ggen.md"), "text");
+  fs.writeFileSync(path.join(dir, "t.agent.ggen.json"), JSON.stringify({ name: "t", sections: ["s"], ...target }));
+  return { dir, project: loadProject(path.join(dir, "glugent.config.json")) };
+}
+
+const outputErrors = (project: ReturnType<typeof loadProject>) =>
+  validateProject(project).map((d) => `${path.basename(d.file)}:${d.line}: ${d.message.replace(/^.* output \S+ /, "")}`);
+
+test("build: output inside the project folder is allowed", () => {
+  const { project } = outputProject({}, { output: "docs/..dots/t.md" });
+  assert.deepEqual(validateProject(project), []);
+  writeBuild(compileTarget(project, project.targets[0]));
+  assert.equal(checkBuild(compileTarget(project, project.targets[0])), "current");
+});
+
+test("build: output outside the project folder or in .git is an error and is not written", () => {
+  const outside = (output: string) => outputErrors(outputProject({}, { output }).project);
+  assert.match(outside("../escape.md")[0], /^t\.agent\.ggen\.json:0: is outside the project folder/);
+  assert.match(outside(path.join(os.tmpdir(), "escape.md"))[0], /is outside the project folder/);
+  assert.deepEqual(outside(".git/hooks/pre-commit"), ["t.agent.ggen.json:0: is inside a .git folder"]);
+  assert.deepEqual(outside("sub/.GIT/config"), ["t.agent.ggen.json:0: is inside a .git folder"]);
+
+  const { dir, project } = outputProject({ outDir: "../out" });
+  assert.match(outputErrors(project)[0], /^glugent\.config\.json:0: is outside the project folder/);
+  const result = compileTarget(project, project.targets[0]);
+  assert.throws(() => writeBuild(result), /Not writing .*: target 't' has errors/);
+  assert.equal(fs.existsSync(path.join(dir, "../out/t.md")), false);
+});
+
+test("build: output through a symbolic link that leaves the project folder is an error", () => {
+  const elsewhere = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-elsewhere-"));
+  const victim = path.join(elsewhere, "victim.md");
+  fs.writeFileSync(victim, "keep");
+
+  const linkedFile = outputProject({}, { output: "t.md" });
+  fs.symlinkSync(victim, path.join(linkedFile.dir, "t.md"));
+  assert.deepEqual(outputErrors(linkedFile.project), ["t.agent.ggen.json:0: is a symbolic link"]);
+
+  const dangling = outputProject({}, { output: "t.md" });
+  fs.symlinkSync(path.join(elsewhere, "new.md"), path.join(dangling.dir, "t.md"));
+  assert.deepEqual(outputErrors(dangling.project), ["t.agent.ggen.json:0: is a symbolic link"]);
+
+  const linkedDir = outputProject({ outDir: "out/agents" });
+  fs.symlinkSync(elsewhere, path.join(linkedDir.dir, "out"));
+  assert.match(outputErrors(linkedDir.project)[0], /^glugent\.config\.json:0: leads outside the project folder .* through a symbolic link$/);
+
+  const linkedGit = outputProject({}, { output: "hooks/pre-commit" });
+  fs.mkdirSync(path.join(linkedGit.dir, ".git"));
+  fs.symlinkSync(path.join(linkedGit.dir, ".git"), path.join(linkedGit.dir, "hooks"));
+  assert.deepEqual(outputErrors(linkedGit.project), ["t.agent.ggen.json:0: leads into a .git folder through a symbolic link"]);
+
+  assert.equal(fs.readFileSync(victim, "utf8"), "keep");
+  assert.equal(fs.existsSync(path.join(elsewhere, "new.md")), false);
+});
+
+test("project: files outside the project folder are not read, even through symbolic links", () => {
+  const elsewhere = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "ggen-elsewhere-")));
+  fs.writeFileSync(path.join(elsewhere, "secret.ggen.md"), "SECRET");
+  fs.mkdirSync(path.join(elsewhere, "dir"));
+  fs.writeFileSync(path.join(elsewhere, "dir/inner.ggen.md"), "SECRET");
+  const notRead = (project: ReturnType<typeof loadProject>) =>
+    project.diagnostics.map((d) => `${path.basename(d.file)}: ${d.message.replace(/^Not reading (\S+): it /, (_, f) => `${path.basename(f)} `)}`);
+  const secretRead = (project: ReturnType<typeof loadProject>) => project.sections.some((s) => s.body.includes("SECRET"));
+
+  const linkedFile = outputProject({});
+  fs.symlinkSync(path.join(elsewhere, "secret.ggen.md"), path.join(linkedFile.dir, "x.ggen.md"));
+  const linkedFileProject = loadProject(path.join(linkedFile.dir, "glugent.config.json"));
+  assert.match(notRead(linkedFileProject)[0], /^glugent\.config\.json: x\.ggen\.md leads outside the project folder .* through a symbolic link$/);
+  assert.equal(secretRead(linkedFileProject), false);
+
+  const parentGlob = outputProject({ sections: { include: ["**/*.ggen.md", `../${path.basename(elsewhere)}/*.ggen.md`] } });
+  assert.match(notRead(parentGlob.project)[0], /^glugent\.config\.json: secret\.ggen\.md is outside the project folder/);
+  assert.equal(secretRead(parentGlob.project), false);
+  assert.deepEqual(parentGlob.project.sections.map((s) => s.id), ["s"]);
+
+  const absoluteGlob = outputProject({ targets: { include: [path.join(elsewhere, "*.ggen.md")] } });
+  assert.match(notRead(absoluteGlob.project)[0], /secret\.ggen\.md is outside the project folder/);
+
+  const linkedDir = outputProject({});
+  fs.symlinkSync(path.join(elsewhere, "dir"), path.join(linkedDir.dir, "dir"));
+  const linkedDirProject = loadProject(path.join(linkedDir.dir, "glugent.config.json"));
+  assert.deepEqual(linkedDirProject.diagnostics, []); // the linked folder is not walked
+  assert.equal(secretRead(linkedDirProject), false);
+
+  const linkedGit = outputProject({});
+  fs.mkdirSync(path.join(linkedGit.dir, ".git"));
+  fs.writeFileSync(path.join(linkedGit.dir, ".git/config.ggen.md"), "SECRET");
+  fs.symlinkSync(path.join(linkedGit.dir, ".git/config.ggen.md"), path.join(linkedGit.dir, "c.ggen.md"));
+  const linkedGitProject = loadProject(path.join(linkedGit.dir, "glugent.config.json"));
+  assert.deepEqual(notRead(linkedGitProject), ["glugent.config.json: c.ggen.md leads into a .git folder through a symbolic link"]);
+  assert.equal(secretRead(linkedGitProject), false);
+
+  const dangling = outputProject({});
+  fs.symlinkSync(path.join(elsewhere, "missing.ggen.md"), path.join(dangling.dir, "d.ggen.md"));
+  assert.deepEqual(notRead(loadProject(path.join(dangling.dir, "glugent.config.json"))), [
+    "glugent.config.json: d.ggen.md is a symbolic link to a file that does not exist",
+  ]);
+});
+
+test("project: a symbolic link to a file inside the project folder is read", () => {
+  const { dir } = outputProject({});
+  fs.symlinkSync(path.join(dir, "s.ggen.md"), path.join(dir, "alias.ggen.md"));
+  const project = loadProject(path.join(dir, "glugent.config.json"));
+  assert.deepEqual(project.diagnostics, []);
+  assert.deepEqual(project.sections.map((s) => s.id), ["alias", "s"]);
+});
+
+test("render: slot and prop names that are Object members are ordinary names", () => {
+  for (const name of ["toString", "constructor", "__proto__", "hasOwnProperty"]) {
+    assert.equal(renderTemplate(`a\n{ #${name}? }\nb`, {}, { slots: {} }).text, "a\nb", name);
+    assert.equal(renderTemplate(`[{${name}?}]`, {}).text, "[]", name);
+  }
+  const { dir } = outputProject({});
+  fs.writeFileSync(path.join(dir, "s.ggen.md"), "[{__proto__}] [{constructor?}]\n{ #__proto__ }");
+  fs.writeFileSync(path.join(dir, "p.ggen.md"), '{ REF BEGIN s | __proto__="from ref" }\n{ SLOT BEGIN __proto__ }\nfill\n{ SLOT END __proto__ }\n{ REF END s }');
+  fs.writeFileSync(path.join(dir, "t.agent.ggen.json"), JSON.stringify({ name: "t", sections: [{ use: "p" }] }));
+  const loaded = loadProject(path.join(dir, "glugent.config.json"));
+  const result = compileTarget(loaded, loaded.targets[0], { overrides: JSON.parse('{"constructor": "set"}') });
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.content, "[from ref] [set]\nfill\n");
+});
+
+test("project: frontmatter alias bombs and non-value defaults are rejected", () => {
+  const bomb = ["a: &a [x,x,x,x,x,x,x,x,x]", ...["b", "c", "d", "e", "f", "g"].map((k, i) => `${k}: &${k} [${Array(9).fill(`*${"abcdefg"[i]}`).join(",")}]`)].join("\n");
+  const parsed = parseSection("/s.ggen.md", `---\n${bomb}\n---\nbody`, "s");
+  assert.match(parsed.diagnostics[0].message, /Invalid frontmatter: .*alias/i);
+  const proto = parseSection("/s.ggen.md", "---\ndefaults:\n  __proto__: { polluted: yes }\n---\nbody", "s");
+  assert.match(proto.diagnostics[0].message, /'defaults' must be a map/);
+  assert.equal(({} as Record<string, unknown>).polluted, undefined);
 });

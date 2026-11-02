@@ -57,6 +57,8 @@ export class CompletionItem {
 
 export class MarkdownString {
   value = "";
+  isTrusted?: boolean;
+  supportHtml?: boolean;
   appendMarkdown(text: string): this {
     this.value += text;
     return this;
@@ -100,9 +102,12 @@ export const state = {
   configFiles: [] as string[],
   /** What the next `showQuickPick` returns, given its items. */
   pick: (items: any[]): any => items[0],
+  /** `workspace.isTrusted`: false is Restricted Mode. */
+  trusted: true,
 };
 
 export function reset(): void {
+  state.trusted = true;
   state.collections = [];
   state.providers = [];
   state.commands.clear();
@@ -135,6 +140,9 @@ export const languages = {
 
 export const workspace = {
   textDocuments: [] as any[],
+  get isTrusted() {
+    return state.trusted;
+  },
   findFiles: async () => state.configFiles.map((f) => Uri.file(f)),
   onDidOpenTextDocument: listen("open"),
   onDidChangeTextDocument: listen("change"),

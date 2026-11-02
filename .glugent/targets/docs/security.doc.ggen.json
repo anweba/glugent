@@ -1,0 +1,5 @@
+{
+  "name": "security",
+  "output": "SECURITY.md",
+  "sections": ["docs/security"]
+}

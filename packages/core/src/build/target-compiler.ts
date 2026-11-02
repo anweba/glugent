@@ -3,12 +3,12 @@ import { renderTemplate, scanTemplate, TemplatePosition, TemplateRef } from "../
 import { Target, BuildResult, Diagnostic, Project, Props, Section, SectionRef } from "../types";
 import { TargetFile } from "./target-file";
 import { BuildOptions } from "./options";
-import { outputPathFor } from "./output-path";
+import { outputPathFor, outputPathProblem } from "./output-path";
 
 /** Reports a problem where the including side wrote it: at a REF (or one of its fills) in a section, or at a target entry. */
 type Report = (message: string, at?: TemplatePosition) => void;
 
-/** Slot contents by name, rendered only when the slot is. */
+/** Slot contents by name, rendered only when the slot is; created without a prototype, as names come from files and may be `__proto__`. */
 type Slots = Record<string, () => string>;
 
 /** Glues a target's sections together into one Markdown document. */
@@ -27,13 +27,28 @@ export class TargetCompiler {
   }
 
   compile(): BuildResult {
+    const outputFile = outputPathFor(this.project, this.target);
+    this.checkOutput(outputFile);
     const parts = this.target.sections.flatMap((ref) => this.renderEntry(ref));
     return {
       target: this.target,
-      outputFile: outputPathFor(this.project, this.target),
+      outputFile,
       content: parts.filter(Boolean).join("\n\n") + "\n",
       diagnostics: this.diagnostics,
     };
+  }
+
+  /** Reports an output path the build may not write, at the target's `output` or the config's `outDir`. */
+  private checkOutput(outputFile: string): void {
+    const problem = outputPathProblem(this.project.root, outputFile);
+    if (!problem) return;
+    const message = `Target '${this.target.name}': output ${outputFile} ${problem}`;
+    if (this.target.output) {
+      this.diagnostics.push({ severity: "error", message, file: this.target.file, ...this.targetFile.locate("output") });
+    } else {
+      const config = new TargetFile((this.options.readFile ?? readFromDisk)(this.project.configFile));
+      this.diagnostics.push({ severity: "error", message, file: this.project.configFile, ...config.locate("outDir") });
+    }
   }
 
   /** Renders one section entry of the target; unknown sections are reported and skipped. */
@@ -90,7 +105,7 @@ export class TargetCompiler {
       return "";
     }
     const props = this.propsFor(section, ref.props, ref.override ? parentProps : undefined);
-    const slots: Slots = {};
+    const slots: Slots = Object.create(null);
     for (const fill of ref.fills ?? []) {
       if (!this.hasSlot(section, fill.name, (message) => here(message, fill))) continue;
       slots[fill.name] = () => fill.render(fill.inherit ? { ...parentProps, ...props } : parentProps);
@@ -100,7 +115,7 @@ export class TargetCompiler {
 
   /** The target entry's `slots`: template text rendered with the entry's props. */
   private entrySlots(section: Section, entry: SectionRef, props: Props): Slots {
-    const slots: Slots = {};
+    const slots: Slots = Object.create(null);
     for (const [name, text] of Object.entries(entry.slots ?? {})) {
       const where = `slot '${name}' of section '${section.id}'`;
       const here: Report = (message) => this.report(`In ${where}: ${message}`, entry);

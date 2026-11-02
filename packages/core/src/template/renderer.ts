@@ -208,7 +208,7 @@ export class TemplateRenderer {
    * template's props; a required prop it is missing is reported here, at the `NAME="..."`.
    */
   private refProps(props: RefProp[]): Props {
-    const passed: Props = {};
+    const passed: Props = Object.create(null);
     for (const prop of props) {
       if (prop.template === undefined) {
         passed[prop.name] = prop.value!;
@@ -232,7 +232,8 @@ export class TemplateRenderer {
   }
 
   private renderSlot(out: Output, slot: SlotPiece): void {
-    const content = this.options.slots?.[slot.name];
+    const slots = this.options.slots;
+    const content = slots && Object.hasOwn(slots, slot.name) ? slots[slot.name] : undefined;
     if (!content && !slot.optional) this.missingSlots.push({ name: slot.name, ...this.position(slot.start, slot.end) });
     this.emit(out, slot, content ? content() : "", slot);
   }

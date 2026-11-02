@@ -1,0 +1,52 @@
+# Version updates for the GitHub Actions (pinned to commit SHAs) and the npm dependencies.
+# Security updates for known vulnerabilities are a separate setting (repository settings ->
+# Code security) and are not delayed by the cooldown below.
+#
+# The cooldown waits until a release has been public for a few days before proposing it,
+# so a hijacked release is usually caught and pulled from the registry before it reaches
+# a pull request here.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # The root covers every workspace through the root package-lock.json.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    # Updates within a package's existing range change only package-lock.json, so they need
+    # no changeset. One outside the range (usually a major) also changes a package.json, and
+    # CI then asks for a changeset, as the published package's dependencies change.
+    versioning-strategy: increase-if-necessary
+    commit-message:
+      prefix: chore
+    groups:
+      # Minor and patch updates in two PRs a week: what ships to users, and the tooling.
+      production:
+        dependency-type: production
+        update-types: [minor, patch]
+      development:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # The packages of this repository, linked as workspaces.
+      - dependency-name: "glugent"
+      - dependency-name: "@anweba/glugent-*"
+      # Must match engines.vscode of the extension; raise both together by hand.
+      - dependency-name: "@types/vscode"
+      # Kept on the Node version CI tests with (Node 20); raise both together by hand.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]

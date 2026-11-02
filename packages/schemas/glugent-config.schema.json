@@ -37,7 +37,7 @@
       "description": "Project-wide props. They override agent props but are overridden by CLI --set.",
       "additionalProperties": { "type": ["string", "number", "boolean"] }
     },
-    "outDir": { "type": "string", "default": "dist/agents", "description": "Default output directory for built agents." }
+    "outDir": { "type": "string", "default": "dist/agents", "description": "Default output directory for built agents, inside the config file's directory." }
   },
   "additionalProperties": false
 }

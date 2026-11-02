@@ -2,7 +2,7 @@
 # Warns, without changing or blocking anything, when the built agents (and the
 # generated docs) do not match the sources of this checkout.
 cd "$(git rev-parse --show-toplevel)" || exit 0
-[ -f packages/cli/dist/cli.js ] || exit 0 # nothing built yet: npm run build
+[ -f packages/cli/dist/cli.js ] && [ -f packages/core/dist/index.js ] || exit 0 # nothing built yet: npm run build
 
 # A grey hint (and the CLI's red ✗ with yellow text) on a terminal; plain text elsewhere (IDE git logs, NO_COLOR).
 grey="" reset=""
@@ -11,7 +11,8 @@ if [ -t 1 ] && [ -z "$NO_COLOR" ]; then
   grey=$(printf '\033[90m') reset=$(printf '\033[0m')
 fi
 
-report=$(npm run --silent targets:check 2>&1)
+# Not `npm run targets:check`: package.json comes from the checkout, which may be an untrusted branch.
+report=$(node "$(dirname "$0")/run-cli.cjs" build --check -c glugent.config.json 2>&1)
 if [ $? -ne 0 ]; then
   echo
   echo "glugent: some built files do not match the sources of this checkout:"

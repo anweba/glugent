@@ -11,8 +11,8 @@ packages/
   vscode/   glugent-vscode – thin wrapper: highlighting, diagnostics, completion, hover, build commands
   schemas/  JSON Schemas for glugent.config.json and target files
 examples/   numbered example projects (01-hello-agent … 09-team), each with its committed output/
-scripts/    run-glugent-on-examples.mjs: validate, build or check every example
-.githooks/  Git hooks, turned on by npm install: pre-push runs the CI checks, the others warn about stale agents
+scripts/    run-glugent-on-examples.mjs: validate, build or check every example; install-git-hooks.mjs: install .githooks/ (npm install runs it)
+.githooks/  Git hooks, installed into .git/glugent-hooks/ by npm install: pre-push runs the CI checks, the others warn about stale agents
 ```
 
 The CLI and the extension both call `@anweba/glugent-core`; nothing is implemented twice. In the CLI, `cli.ts` (the `Cli` class) wires `Arguments`, `Reporter` and one `Command` subclass per subcommand in `commands/`; add a command by subclassing `Command` and registering it in `COMMANDS`. Inside `@anweba/glugent-core` (`packages/core/src`), each folder is one stage, and the public functions (`loadProject`, `compileAgent`, `validateProject`, `renderTemplate`, `scanTemplate`) are thin wrappers over the classes:
@@ -59,14 +59,14 @@ CI checks the examples and fails if a committed `output/` differs, so after chan
 
 `npm run verify` runs what CI runs: build, tests, `docs:check` and `examples:check`. `npm run targets:check` tells you whether the built agents in `agents/` match the sources.
 
-`npm install` turns on the hooks in `.githooks/` (`git config core.hooksPath .githooks`):
+`npm install` installs the hooks in `.githooks/`: it copies them into `.git/glugent-hooks/` and points `core.hooksPath` there. Git runs that copy, so checking out a branch, such as a pull request, never runs the branch's own hooks. When `.githooks/` changes, the hooks warn that it differs from the installed copy; review the change, then run `npm run hooks:install`. The checkout hooks run the CLI you built (`packages/*/dist`), not `npm run` scripts, so no file of the checked-out branch decides what runs.
 
 | Hook | Does |
 |---|---|
 | `pre-push` | runs `npm run verify`, then checks for a changeset against `origin/main`, as CI does; a failure stops the push |
 | `post-checkout`, `post-merge`, `post-rewrite` | after switching or creating a branch, a pull or merge, or a rebase: warns when `agents/` or the generated docs do not match the sources. It never rebuilds or blocks; rebuild with `npm run targets:build` |
 
-The checks run on the working tree, not on exactly what is pushed, so CI stays the final word. Skip the pre-push hook once with `git push --no-verify`.
+The checks run on the working tree, not on exactly what is pushed, so CI stays the final word. Skip the pre-push hook once with `git push --no-verify`. Like CI, `pre-push` builds and tests the branch, so it runs the branch's code: push someone else's branch only after reviewing it, or with `--no-verify`. `npm install` and `npm run` run the checked-out `package.json` too, so review an untrusted branch before running either.
 
 To try the extension, open this repo in VS Code and run **Extension: try on examples/09-team** (F5). It builds everything and opens a second window on `examples/09-team` with the extension loaded: open a `.ggen.md` file for highlighting, hover and completion (type `{`), break something to see diagnostics in the Problems panel, and use the *Glugent:* commands from the command palette.
 
@@ -118,6 +118,14 @@ The workflow needs `id-token: write`, Node 24 (npm >= 11.5.1) and a GitHub-hoste
 `@anweba/glugent-core`, `@anweba/glugent-schemas` and `glugent` are published publicly (`publishConfig.access`); `dist/test` is left out of the tarballs. `glugent-vscode` is `private` so it is versioned and tagged but never pushed to npm.
 
 The extension is published by the `publish-extension` job of the same workflow, to the VS Code Marketplace (publisher `anweba`) and to Open VSX (namespace `anweba`). It runs on `main` once a Version Packages PR is merged, packages the extension and publishes it with `--skip-duplicate`, so a release that does not bump the extension publishes nothing. Its tokens are the secrets `VSCE_PAT` (an Azure DevOps token with the *Marketplace → Manage* scope) and `OVSX_PAT` (an Open VSX access token) of the GitHub environment **Release**, which only `main` may use; only the publish step sees them. The Azure DevOps token expires after at most a year: renew it and update the secret before then. To publish by hand: `npm run package -w glugent-vscode`, then in `packages/vscode` run `npx vsce publish --packagePath <file>.vsix` and `npx ovsx publish <file>.vsix`. Releases from `release/**` branches go out under the `maintenance` dist-tag, so an old line never becomes `latest`.
+
+Keep the workflows hardened when you change them:
+
+- Each job declares its own `permissions:`; the Release workflow grants nothing by default, and only the `release` job may write or request the npm identity token.
+- Third-party actions are pinned to a commit SHA with the version in a comment; Dependabot (`.github/dependabot.yml`) opens PRs to update them. Do not switch back to tags such as `@v4`.
+- Dependabot also opens weekly PRs for npm dependencies: minor and patch updates grouped into one PR for production and one for development dependencies, majors one by one, each only once the release is at least 7 days old (14 for majors). An update within the existing range changes only `package-lock.json`; one that changes a published package's `package.json` needs a changeset, which you add to the Dependabot PR before merging it.
+- Dependencies are installed with `npm ci --ignore-scripts`, so no install script runs where a token or write access is available. If a new dependency needs its install script, find another way rather than dropping the flag.
+- `.github/CODEOWNERS` requires the owner's review for workflows, hooks, the changeset config and the `package.json` files.
 
 ## Patching an older release
 

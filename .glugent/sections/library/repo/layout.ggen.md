@@ -9,8 +9,8 @@ packages/
   vscode/   glugent-vscode – thin wrapper: highlighting, diagnostics, completion, hover, build commands
   schemas/  JSON Schemas for glugent.config.json and target files
 examples/   numbered example projects (01-hello-agent … 09-team), each with its committed output/
-scripts/    run-glugent-on-examples.mjs: validate, build or check every example
-.githooks/  Git hooks, turned on by npm install: pre-push runs the CI checks, the others warn about stale agents
+scripts/    run-glugent-on-examples.mjs: validate, build or check every example; install-git-hooks.mjs: install .githooks/ (npm install runs it)
+.githooks/  Git hooks, installed into .git/glugent-hooks/ by npm install: pre-push runs the CI checks, the others warn about stale agents
 ```
 
 The CLI and the extension both call `@anweba/glugent-core`; nothing is implemented twice. In the CLI, `cli.ts` (the `Cli` class) wires `Arguments`, `Reporter` and one `Command` subclass per subcommand in `commands/`; add a command by subclassing `Command` and registering it in `COMMANDS`. Inside `@anweba/glugent-core` (`packages/core/src`), each folder is one stage, and the public functions (`loadProject`, `compileAgent`, `validateProject`, `renderTemplate`, `scanTemplate`) are thin wrappers over the classes:
