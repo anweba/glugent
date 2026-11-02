@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { inGitFolder, isInside } from "../paths";
 import { Target, Project } from "../types";
 
 /** Where a target's compiled Markdown is written. */
@@ -25,19 +26,6 @@ export function outputPathProblem(root: string, file: string): string | undefine
   if (!isInside(realRoot, realExisting)) return `leads outside the project folder ${root} through a symbolic link`;
   if (inGitFolder(realRoot, realExisting)) return "leads into a .git folder through a symbolic link";
   return undefined;
-}
-
-function isInside(root: string, file: string): boolean {
-  const relative = path.relative(root, file);
-  return relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
-}
-
-/** Case-insensitive, as `.GIT` is the same folder on macOS and Windows. */
-function inGitFolder(root: string, file: string): boolean {
-  return path
-    .relative(root, file)
-    .split(path.sep)
-    .some((part) => part.toLowerCase() === ".git");
 }
 
 /** `file` itself if it exists (a dangling symbolic link counts), else its nearest existing ancestor. */

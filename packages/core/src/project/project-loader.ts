@@ -1,6 +1,8 @@
+import * as fs from "fs";
 import * as path from "path";
 import fg from "fast-glob";
 import { diag } from "../diagnostics";
+import { inGitFolder, isInside } from "../paths";
 import { Target, Diagnostic, GlugentConfig, Project, Section } from "../types";
 import { TargetParser } from "./target-parser";
 import { ALWAYS_IGNORE, DEFAULT_TARGET_INCLUDE, DEFAULT_SECTION_INCLUDE } from "./constants";
@@ -88,8 +90,40 @@ export class ProjectLoader {
     }
   }
 
+  /**
+   * The files the globs match that may be read. Symbolic links to folders are not walked
+   * (one to `/` would scan the whole disk), and a match that is outside the project folder,
+   * or a symbolic link that leads outside it or into `.git`, is reported and not read: a
+   * cloned project could otherwise copy any file the user can read, such as ~/.ssh/id_rsa,
+   * into a built file.
+   */
   private glob(include: string[], exclude: string[] = []): string[] {
-    return fg.sync(include, { cwd: this.root, absolute: true, ignore: [...ALWAYS_IGNORE, ...exclude], dot: false }).sort();
+    // onlyFiles is off because, without following links, fast-glob would drop every symbolic link to a file.
+    const options = { cwd: this.root, absolute: true, ignore: [...ALWAYS_IGNORE, ...exclude], dot: false, followSymbolicLinks: false, onlyFiles: false };
+    return fg.sync(include, options).sort().filter((file) => this.mayRead(file));
+  }
+
+  /** True for a file that may be read; folders (and links to them) are skipped quietly, other problems are reported. */
+  private mayRead(file: string): boolean {
+    const problem = this.readProblem(file);
+    if (problem && problem !== "folder") this.diagnostics.push(diag(this.configFile, `Not reading ${file}: it ${problem}`));
+    return !problem;
+  }
+
+  private readProblem(file: string): string | undefined {
+    if (!isInside(this.root, file)) return `is outside the project folder ${this.root}`;
+    if (inGitFolder(this.root, file)) return "is inside a .git folder";
+    if (!fs.lstatSync(file).isSymbolicLink()) return fs.statSync(file).isFile() ? undefined : "folder";
+    let real: string;
+    try {
+      real = fs.realpathSync(file);
+    } catch {
+      return "is a symbolic link to a file that does not exist";
+    }
+    const realRoot = fs.realpathSync(this.root);
+    if (!isInside(realRoot, real)) return `leads outside the project folder ${this.root} through a symbolic link`;
+    if (inGitFolder(realRoot, real)) return "leads into a .git folder through a symbolic link";
+    return fs.statSync(real).isFile() ? undefined : "folder";
   }
 }
 

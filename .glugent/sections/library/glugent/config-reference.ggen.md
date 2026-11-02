@@ -14,6 +14,8 @@ All keys are optional. Globs are relative to the config file.
 
 Built files are only written inside the config's directory: an `outDir` or a target `output` that leads outside it (including through a symbolic link), into a `.git` folder, or to a symbolic link is an error, and nothing is written for that target.
 
+Section and target files are only read inside the config's directory too: a glob match outside it, or a symbolic link that leads outside it or into `.git`, is an error and the file is not read. Symbolic links to folders are not followed.
+
 `node_modules` and `.git` are always ignored. Unknown keys are errors. Add `$schema` only when the editor extension is not installed or the file has another name; the extension validates `glugent.config.json` and every `*.target.ggen.json`, `*.agent.ggen.json` and `*.doc.ggen.json` automatically.
 { REF END common/h2 }
 
