@@ -87,3 +87,27 @@ test("with several projects the user picks one", async () => {
   assert.ok(fs.existsSync(path.join(second, "dist/agents/zeta.md")));
   assert.equal(fs.existsSync(first.out("alpha")), false);
 });
+
+test("in Restricted Mode, build commands write nothing and say why; validate still runs", async () => {
+  const { store, builder, out } = setup(good);
+  state.trusted = false;
+  await new BuildAllCommand(store, builder).run();
+  await new BuildTargetCommand(store, builder).run();
+  assert.equal(fs.existsSync(out("alpha")), false);
+  assert.equal(fs.existsSync(out("beta")), false);
+  assert.deepEqual(state.messages.map((m) => m.level), ["warning", "warning"]);
+  assert.match(lastMessage().text, /off in Restricted Mode/);
+  await new ValidateCommand(store).run();
+  assert.equal(lastMessage().text, "Glugent: project is valid.");
+});
+
+test("the manifest limits the extension in Restricted Mode and hides the build commands there", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "../../package.json"), "utf8"));
+  assert.equal(manifest.capabilities.untrustedWorkspaces.supported, "limited");
+  assert.equal(manifest.capabilities.virtualWorkspaces.supported, false);
+  const builds = ["glugent.buildAll", "glugent.buildTarget"];
+  for (const id of builds) {
+    assert.equal(manifest.contributes.commands.find((c: { command: string }) => c.command === id).enablement, "isWorkspaceTrusted");
+  }
+  assert.deepEqual(manifest.contributes.menus.commandPalette, builds.map((command) => ({ command, when: "isWorkspaceTrusted" })));
+});

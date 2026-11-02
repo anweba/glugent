@@ -12,6 +12,8 @@ Features: syntax highlighting for placeholders and `if` blocks, live diagnostics
 
 `.ggen.md` files use the `glugent` language, which is Markdown plus Glugent tokens, and show the Glugent file icon unless your icon theme has its own icon for them.
 
+In an untrusted workspace (Restricted Mode) everything works except the build commands, which write files: they are hidden until you trust the workspace.
+
 ## Troubleshooting
 
 Other extensions that claim every `*.md` file can win over Glugent. If the status bar does not say "Glugent" for a `.ggen.md` file, add `"files.associations": { "*.ggen.md": "glugent" }` to the settings.

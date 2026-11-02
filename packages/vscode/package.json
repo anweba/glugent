@@ -19,6 +19,16 @@
   "engines": {
     "vscode": "^1.85.0"
   },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In Restricted Mode, highlighting, diagnostics, completion, hovers and Validate Project work; the build commands are off because they write files."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Glugent reads and writes project files on disk."
+    }
+  },
   "categories": [
     "Programming Languages",
     "Linters"
@@ -88,17 +98,31 @@
     "commands": [
       {
         "command": "glugent.buildAll",
-        "title": "Glugent: Build All Targets"
+        "title": "Glugent: Build All Targets",
+        "enablement": "isWorkspaceTrusted"
       },
       {
         "command": "glugent.buildTarget",
-        "title": "Glugent: Build Target..."
+        "title": "Glugent: Build Target...",
+        "enablement": "isWorkspaceTrusted"
       },
       {
         "command": "glugent.validate",
         "title": "Glugent: Validate Project"
       }
-    ]
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "glugent.buildAll",
+          "when": "isWorkspaceTrusted"
+        },
+        {
+          "command": "glugent.buildTarget",
+          "when": "isWorkspaceTrusted"
+        }
+      ]
+    }
   },
   "scripts": {
     "copy-schemas": "node -e \"const fs=require('fs');fs.mkdirSync('schemas',{recursive:true});for(const f of ['glugent-config','target'])fs.copyFileSync('../schemas/'+f+'.schema.json','schemas/'+f+'.schema.json')\"",
