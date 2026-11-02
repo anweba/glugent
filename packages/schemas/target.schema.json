@@ -6,7 +6,7 @@
   "properties": {
     "$schema": { "type": "string" },
     "name": { "type": "string", "description": "Target name. Used for `glugent build <name>` and the default output file name." },
-    "output": { "type": "string", "description": "Output file path, relative to the config file. Default: <outDir>/<name>.md" },
+    "output": { "type": "string", "description": "Output file path, relative to the config file and inside its directory (not in .git). Default: <outDir>/<name>.md" },
     "props": {
       "type": "object",
       "description": "Props applied to every section of this target.",

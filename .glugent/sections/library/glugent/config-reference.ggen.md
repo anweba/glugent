@@ -12,6 +12,8 @@ All keys are optional. Globs are relative to the config file.
 | `props` | project-wide props (strings, numbers or booleans) |
 | `outDir` | default output folder for built targets (default `dist/agents`) |
 
+Built files are only written inside the config's directory: an `outDir` or a target `output` that leads outside it (including through a symbolic link), into a `.git` folder, or to a symbolic link is an error, and nothing is written for that target.
+
 `node_modules` and `.git` are always ignored. Unknown keys are errors. Add `$schema` only when the editor extension is not installed or the file has another name; the extension validates `glugent.config.json` and every `*.target.ggen.json`, `*.agent.ggen.json` and `*.doc.ggen.json` automatically.
 { REF END common/h2 }
 

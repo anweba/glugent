@@ -441,3 +441,62 @@ test("build: checkBuild compares a result with its output file", () => {
   fs.writeFileSync(result.outputFile, "text");
   assert.equal(checkBuild(result), "stale"); // the build ends with a newline
 });
+
+/** A project with one section 's' and one target 't' built from it; `target` adds fields to the target file. */
+function outputProject(config: object, target: object = {}): { dir: string; project: ReturnType<typeof loadProject> } {
+  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "ggen-")));
+  fs.writeFileSync(path.join(dir, "glugent.config.json"), JSON.stringify(config));
+  fs.writeFileSync(path.join(dir, "s.ggen.md"), "text");
+  fs.writeFileSync(path.join(dir, "t.agent.ggen.json"), JSON.stringify({ name: "t", sections: ["s"], ...target }));
+  return { dir, project: loadProject(path.join(dir, "glugent.config.json")) };
+}
+
+const outputErrors = (project: ReturnType<typeof loadProject>) =>
+  validateProject(project).map((d) => `${path.basename(d.file)}:${d.line}: ${d.message.replace(/^.* output \S+ /, "")}`);
+
+test("build: output inside the project folder is allowed", () => {
+  const { project } = outputProject({}, { output: "docs/..dots/t.md" });
+  assert.deepEqual(validateProject(project), []);
+  writeBuild(compileTarget(project, project.targets[0]));
+  assert.equal(checkBuild(compileTarget(project, project.targets[0])), "current");
+});
+
+test("build: output outside the project folder or in .git is an error and is not written", () => {
+  const outside = (output: string) => outputErrors(outputProject({}, { output }).project);
+  assert.match(outside("../escape.md")[0], /^t\.agent\.ggen\.json:0: is outside the project folder/);
+  assert.match(outside(path.join(os.tmpdir(), "escape.md"))[0], /is outside the project folder/);
+  assert.deepEqual(outside(".git/hooks/pre-commit"), ["t.agent.ggen.json:0: is inside a .git folder"]);
+  assert.deepEqual(outside("sub/.GIT/config"), ["t.agent.ggen.json:0: is inside a .git folder"]);
+
+  const { dir, project } = outputProject({ outDir: "../out" });
+  assert.match(outputErrors(project)[0], /^glugent\.config\.json:0: is outside the project folder/);
+  const result = compileTarget(project, project.targets[0]);
+  assert.throws(() => writeBuild(result), /Not writing .*: target 't' has errors/);
+  assert.equal(fs.existsSync(path.join(dir, "../out/t.md")), false);
+});
+
+test("build: output through a symbolic link that leaves the project folder is an error", () => {
+  const elsewhere = fs.mkdtempSync(path.join(os.tmpdir(), "ggen-elsewhere-"));
+  const victim = path.join(elsewhere, "victim.md");
+  fs.writeFileSync(victim, "keep");
+
+  const linkedFile = outputProject({}, { output: "t.md" });
+  fs.symlinkSync(victim, path.join(linkedFile.dir, "t.md"));
+  assert.deepEqual(outputErrors(linkedFile.project), ["t.agent.ggen.json:0: is a symbolic link"]);
+
+  const dangling = outputProject({}, { output: "t.md" });
+  fs.symlinkSync(path.join(elsewhere, "new.md"), path.join(dangling.dir, "t.md"));
+  assert.deepEqual(outputErrors(dangling.project), ["t.agent.ggen.json:0: is a symbolic link"]);
+
+  const linkedDir = outputProject({ outDir: "out/agents" });
+  fs.symlinkSync(elsewhere, path.join(linkedDir.dir, "out"));
+  assert.match(outputErrors(linkedDir.project)[0], /^glugent\.config\.json:0: leads outside the project folder .* through a symbolic link$/);
+
+  const linkedGit = outputProject({}, { output: "hooks/pre-commit" });
+  fs.mkdirSync(path.join(linkedGit.dir, ".git"));
+  fs.symlinkSync(path.join(linkedGit.dir, ".git"), path.join(linkedGit.dir, "hooks"));
+  assert.deepEqual(outputErrors(linkedGit.project), ["t.agent.ggen.json:0: leads into a .git folder through a symbolic link"]);
+
+  assert.equal(fs.readFileSync(victim, "utf8"), "keep");
+  assert.equal(fs.existsSync(path.join(elsewhere, "new.md")), false);
+});
