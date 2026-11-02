@@ -8,7 +8,7 @@ import { outputPathFor, outputPathProblem } from "./output-path";
 /** Reports a problem where the including side wrote it: at a REF (or one of its fills) in a section, or at a target entry. */
 type Report = (message: string, at?: TemplatePosition) => void;
 
-/** Slot contents by name, rendered only when the slot is. */
+/** Slot contents by name, rendered only when the slot is; created without a prototype, as names come from files and may be `__proto__`. */
 type Slots = Record<string, () => string>;
 
 /** Glues a target's sections together into one Markdown document. */
@@ -105,7 +105,7 @@ export class TargetCompiler {
       return "";
     }
     const props = this.propsFor(section, ref.props, ref.override ? parentProps : undefined);
-    const slots: Slots = {};
+    const slots: Slots = Object.create(null);
     for (const fill of ref.fills ?? []) {
       if (!this.hasSlot(section, fill.name, (message) => here(message, fill))) continue;
       slots[fill.name] = () => fill.render(fill.inherit ? { ...parentProps, ...props } : parentProps);
@@ -115,7 +115,7 @@ export class TargetCompiler {
 
   /** The target entry's `slots`: template text rendered with the entry's props. */
   private entrySlots(section: Section, entry: SectionRef, props: Props): Slots {
-    const slots: Slots = {};
+    const slots: Slots = Object.create(null);
     for (const [name, text] of Object.entries(entry.slots ?? {})) {
       const where = `slot '${name}' of section '${section.id}'`;
       const here: Report = (message) => this.report(`In ${where}: ${message}`, entry);

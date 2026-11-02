@@ -57,6 +57,8 @@ export class CompletionItem {
 
 export class MarkdownString {
   value = "";
+  isTrusted?: boolean;
+  supportHtml?: boolean;
   appendMarkdown(text: string): this {
     this.value += text;
     return this;

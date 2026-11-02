@@ -3,7 +3,7 @@ import assert from "node:assert";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { renderTemplate, scanTemplate, loadProject, compileAgent, compileTarget, validateProject, checkBuild, writeBuild } from "../index";
+import { renderTemplate, scanTemplate, loadProject, compileAgent, compileTarget, validateProject, checkBuild, writeBuild, parseSection } from "../index";
 
 
 test("render: required, optional, literal braces", () => {
@@ -551,4 +551,28 @@ test("project: a symbolic link to a file inside the project folder is read", () 
   const project = loadProject(path.join(dir, "glugent.config.json"));
   assert.deepEqual(project.diagnostics, []);
   assert.deepEqual(project.sections.map((s) => s.id), ["alias", "s"]);
+});
+
+test("render: slot and prop names that are Object members are ordinary names", () => {
+  for (const name of ["toString", "constructor", "__proto__", "hasOwnProperty"]) {
+    assert.equal(renderTemplate(`a\n{ #${name}? }\nb`, {}, { slots: {} }).text, "a\nb", name);
+    assert.equal(renderTemplate(`[{${name}?}]`, {}).text, "[]", name);
+  }
+  const { dir } = outputProject({});
+  fs.writeFileSync(path.join(dir, "s.ggen.md"), "[{__proto__}] [{constructor?}]\n{ #__proto__ }");
+  fs.writeFileSync(path.join(dir, "p.ggen.md"), '{ REF BEGIN s | __proto__="from ref" }\n{ SLOT BEGIN __proto__ }\nfill\n{ SLOT END __proto__ }\n{ REF END s }');
+  fs.writeFileSync(path.join(dir, "t.agent.ggen.json"), JSON.stringify({ name: "t", sections: [{ use: "p" }] }));
+  const loaded = loadProject(path.join(dir, "glugent.config.json"));
+  const result = compileTarget(loaded, loaded.targets[0], { overrides: JSON.parse('{"constructor": "set"}') });
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.content, "[from ref] [set]\nfill\n");
+});
+
+test("project: frontmatter alias bombs and non-value defaults are rejected", () => {
+  const bomb = ["a: &a [x,x,x,x,x,x,x,x,x]", ...["b", "c", "d", "e", "f", "g"].map((k, i) => `${k}: &${k} [${Array(9).fill(`*${"abcdefg"[i]}`).join(",")}]`)].join("\n");
+  const parsed = parseSection("/s.ggen.md", `---\n${bomb}\n---\nbody`, "s");
+  assert.match(parsed.diagnostics[0].message, /Invalid frontmatter: .*alias/i);
+  const proto = parseSection("/s.ggen.md", "---\ndefaults:\n  __proto__: { polluted: yes }\n---\nbody", "s");
+  assert.match(proto.diagnostics[0].message, /'defaults' must be a map/);
+  assert.equal(({} as Record<string, unknown>).polluted, undefined);
 });

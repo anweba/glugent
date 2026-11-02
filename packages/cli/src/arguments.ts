@@ -7,7 +7,7 @@ export class Arguments {
   /** Positional arguments after the command (e.g. target names). */
   names: string[] = [];
   /** `--set KEY=VALUE` overrides; they win over every other prop layer. */
-  overrides: Props = {};
+  overrides: Props = Object.create(null); // no prototype, so `--set __proto__=x` is an ordinary prop
   config?: string;
   dryRun = false;
   /** `build --check`: compare with the files on disk instead of writing them. */
