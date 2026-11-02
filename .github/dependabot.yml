@@ -1,0 +1,12 @@
+# Keeps the GitHub Actions pinned to commit SHAs up to date. npm dependencies are
+# covered by Dependabot security updates (repository settings), which open PRs
+# only for known vulnerabilities.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

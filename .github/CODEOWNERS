@@ -1,0 +1,8 @@
+# Changes to what runs in CI and releases, and to how packages are published,
+# need the owner's review (with "Require review from Code Owners" on main).
+/.github/                 @AnToniceQ
+/.githooks/               @AnToniceQ
+/.changeset/config.json   @AnToniceQ
+/package.json             @AnToniceQ
+/packages/*/package.json  @AnToniceQ
+/scripts/                 @AnToniceQ
