@@ -47,6 +47,6 @@ updates:
       - dependency-name: "@anweba/glugent-*"
       # Must match engines.vscode of the extension; raise both together by hand.
       - dependency-name: "@types/vscode"
-      # Kept on the Node version CI tests with (Node 20); raise both together by hand.
+      # Kept on the lowest Node in engines.node (Node 22) and the CI matrix; raise all together by hand.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
