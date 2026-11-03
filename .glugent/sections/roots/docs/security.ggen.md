@@ -15,8 +15,9 @@ Include what is affected (package and version), how to reproduce it, and the imp
 { REF END common/h2 }
 
 { REF BEGIN common/h2 | HEAD="How releases are protected" }
-- npm packages are published by the Release workflow with npm trusted publishing (OIDC), so no npm token is stored, and they carry provenance.
-- The extension is built in a job without secrets and published from a GitHub environment that only `main` may use and that needs a reviewer's approval. Both the VS Code Marketplace and Open VSX use trusted publishing (OIDC), so no publish token is stored.
+- Releases are built in a job with no secrets and no publish identity; separate jobs publish what it built and run no build or install script.
+- npm packages are published with npm trusted publishing (OIDC) from a dedicated GitHub environment, so no npm token is stored, and they carry provenance.
+- The extension is published from a GitHub environment that only `main` may use and that needs a reviewer's approval. Both the VS Code Marketplace and Open VSX use trusted publishing (OIDC), so no publish token is stored.
 - The workflows grant each job only the permissions it needs, pin third-party actions to commit SHAs, and install dependencies without running install scripts.
 { REF END common/h2 }
 { REF END common/h1 }
