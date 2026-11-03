@@ -1,5 +1,23 @@
 # @anweba/glugent-core
 
+## 0.5.0
+
+### Minor Changes
+
+- [#35](https://github.com/anweba/glugent/pull/35) [`c78d3ed`](https://github.com/anweba/glugent/commit/c78d3ed1c1a0913addfa20e27078eaa756d27f6d) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - Node.js 22 or newer is now required (`engines.node: ">=22"`). Node.js 20 reached end-of-life in April 2026; glugent is tested on Node.js 22, 24 and 26.
+
+- [#29](https://github.com/anweba/glugent/pull/29) [`a3c3f39`](https://github.com/anweba/glugent/commit/a3c3f39a48803eaa890f629d5cb17342f51a29e5) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - **Breaking, for security:** a build no longer writes outside the project. An `outDir` or target `output` that leads outside the config file's directory (directly, as an absolute path, or through a symbolic link), into a `.git` folder, or to a symbolic link is now an error, and the target is not written. Before, building a cloned project could overwrite any file you can write, such as `~/.bashrc` or a git hook. `writeBuild` now also refuses a result that has errors, and opens the output file without following a symbolic link (except on Windows).
+
+  To upgrade: if a target writes outside the folder of its `glugent.config.json`, move the config file up to a folder that contains every output, and adjust `outDir`, `output` and the globs, which are relative to it. If you call `writeBuild` yourself, check the result's diagnostics first, as it now throws on errors.
+
+- [#29](https://github.com/anweba/glugent/pull/29) [`7883299`](https://github.com/anweba/glugent/commit/78832996512c53c5fb68658ec089306739b9a290) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - **Breaking, for security:** loading a project no longer reads files outside it. A section or target glob that matches a file outside the config file's directory (with `../` or an absolute pattern), or a symbolic link that leads outside it or into a `.git` folder, is now reported as an error on the config file and the file is not read. Before, a cloned project could copy any file you can read, such as `~/.ssh/id_rsa`, into a built file. Symbolic links to folders are no longer followed while looking for files; symbolic links to files inside the project still work.
+
+  To upgrade: if your globs reach outside the folder of `glugent.config.json`, move the config file up so every section and target is below it. If you link in a shared folder of sections, copy it in, or use a git submodule, instead of a symbolic link.
+
+### Patch Changes
+
+- [#29](https://github.com/anweba/glugent/pull/29) [`b9ff2cc`](https://github.com/anweba/glugent/commit/b9ff2cc09c62500611e144474c52e9274265c4fd) Thanks [@AnToniceQ](https://github.com/AnToniceQ)! - Prop and slot names that are also JavaScript object members, such as `constructor`, `toString` or `__proto__`, are now ordinary names. Before, an unfilled optional slot named `toString` or `constructor` rendered `[object Undefined]` or `[object Object]`, a slot named `__proto__` crashed the build, and `glugent build --set __proto__=x` was ignored. The extension's hover no longer shows such members as section defaults or config values, and it shows values from the project as inline code they cannot break out of, in Markdown that runs no command links or HTML.
+
 ## 0.4.2
 
 ## 0.4.1

@@ -1,6 +1,6 @@
 {
   "name": "glugent",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Glue Markdown sections into AI agents, docs and other targets: the Glugent command line.",
   "keywords": [
     "glugent",
@@ -41,6 +41,6 @@
     "test": "node --test dist/test/*.test.js"
   },
   "dependencies": {
-    "@anweba/glugent-core": "0.4.2"
+    "@anweba/glugent-core": "0.5.0"
   }
 }
