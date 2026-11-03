@@ -77,9 +77,8 @@ jobs:
 
   # Publishes the built .vsix to the VS Code Marketplace and Open VSX. It runs
   # in the "Release" environment, which only main may use and which waits for
-  # approval. Open VSX uses trusted publishing (OIDC, registered for this
-  # workflow and environment), so no Open VSX token is stored; the Marketplace
-  # token is given to its publish step alone. This job builds nothing and
+  # approval. Both registries use trusted publishing (OIDC, registered for this
+  # workflow and environment), so no publish token is stored. This job builds nothing and
   # installs without scripts, so no code but vsce and ovsx (from the lockfile)
   # runs where id-token is granted.
   # --skip-duplicate turns a release that did not bump the extension into a no-op.
@@ -103,9 +102,7 @@ jobs:
           path: packages/vscode
       - name: Publish to the VS Code Marketplace
         working-directory: packages/vscode
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx vsce publish --packagePath glugent-vscode-*.vsix --skip-duplicate
+        run: npx vsce publish --packagePath glugent-vscode-*.vsix --oidc --skip-duplicate
       - name: Publish to Open VSX
         working-directory: packages/vscode
         run: npx ovsx publish glugent-vscode-*.vsix --trusted-publishing --skip-duplicate
