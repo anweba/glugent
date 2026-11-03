@@ -36,9 +36,11 @@ jobs:
       contents: write
       pull-requests: write
     outputs:
-      # "false" once every changeset is consumed: the push is the merge of a
-      # Version Packages PR (or has nothing to release), not a feature merge.
-      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
+      # "true" if this commit releases something for that registry; the jobs
+      # below are skipped otherwise (a feature merge, or a merge with nothing
+      # to release), so nothing is built and no approval is asked for nothing.
+      npm: ${{ steps.released.outputs.npm }}
+      extension: ${{ steps.released.outputs.extension }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -57,13 +59,22 @@ jobs:
           version: npm run version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # A release is the merge of a Version Packages PR: the commit that raises
+      # a package's "version" (a re-run checks the same commit, so gets the same
+      # answer). glugent-vscode is the only package not published to npm.
+      - id: released
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: |
+          bumped() { grep -q '^+  "version":' <(git diff -U0 HEAD^ HEAD -- "$@"); }
+          echo "npm=$(bumped 'packages/*/package.json' ':!packages/vscode/package.json' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "extension=$(bumped packages/vscode/package.json && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
   # Builds what is released, with no secrets and no id-token, so nothing in
   # npm ci or the build can publish. Hands dist/ of the npm packages to
   # publish-npm and, on main, the .vsix to publish-extension.
   build:
     needs: version
-    if: needs.version.outputs.hasChangesets == 'false'
+    if: needs.version.outputs.npm == 'true' || needs.version.outputs.extension == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -77,7 +88,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run build
       # @anweba/glugent-schemas has no build: it publishes the committed JSON files.
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - if: needs.version.outputs.npm == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: npm-dist
           path: |
@@ -86,9 +98,9 @@ jobs:
             !packages/*/dist/test
           if-no-files-found: error
           retention-days: 1
-      - if: github.ref_name == 'main'
+      - if: github.ref_name == 'main' && needs.version.outputs.extension == 'true'
         run: npm run package -w glugent-vscode
-      - if: github.ref_name == 'main'
+      - if: github.ref_name == 'main' && needs.version.outputs.extension == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: vsix
@@ -128,9 +140,10 @@ jobs:
   # is stored; the trusted publisher on npm is registered for this workflow and
   # the "publish-npm" environment (main and release/** may use it). It cannot
   # write to the repository: release-prepare made the tags (--no-git-tag).
-  # A release that bumps only the extension publishes nothing here.
+  # Skipped when the release bumps no npm package (only the extension).
   publish-npm:
-    needs: release-prepare
+    needs: [version, release-prepare]
+    if: needs.version.outputs.npm == 'true'
     runs-on: ubuntu-latest
     environment: publish-npm
     concurrency:
@@ -166,10 +179,11 @@ jobs:
   # "publish-extension" environment, which only main may use. Both registries
   # use trusted publishing (OIDC, registered for this workflow and environment),
   # so no publish token is stored.
-  # --skip-duplicate turns a release that did not bump the extension into a no-op.
+  # Skipped when the release does not bump the extension. --skip-duplicate makes
+  # a re-run after a partial publish skip the store that already has the version.
   publish-extension:
-    needs: release-prepare
-    if: github.ref_name == 'main'
+    needs: [version, release-prepare]
+    if: github.ref_name == 'main' && needs.version.outputs.extension == 'true'
     runs-on: ubuntu-latest
     environment: publish-extension
     # One extension publish at a time; waiting for approval holds back only the
