@@ -108,6 +108,11 @@ jobs:
       group: release-prepare-${{ github.ref }}
     permissions:
       contents: write
+    outputs:
+      # "true" if this release has something for that publish job; it is
+      # skipped otherwise, so it does not wait for an approval for nothing.
+      npm: ${{ steps.released.outputs.npm }}
+      extension: ${{ steps.released.outputs.extension }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -122,15 +127,33 @@ jobs:
           publish: npx changeset tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # What this release contains: the tags on the released commit, one per
+      # package it bumped. Read from the tags, not from what the step above
+      # created, so a re-run (when the tags already exist) still publishes.
+      # glugent-vscode is the only package not published to npm.
+      - id: released
+        run: |
+          npm=false
+          extension=false
+          for tag in $(git tag --points-at HEAD); do
+            echo "Released: $tag"
+            case "$tag" in
+              glugent-vscode@*) extension=true ;;
+              *) npm=true ;;
+            esac
+          done
+          echo "npm=$npm" >> "$GITHUB_OUTPUT"
+          echo "extension=$extension" >> "$GITHUB_OUTPUT"
 
   # Publishes to npm the dist/ that build made. npm trusted publishing: the job
   # exchanges its OIDC identity for a short-lived publish token, so no NPM_TOKEN
   # is stored; the trusted publisher on npm is registered for this workflow and
   # the "publish-npm" environment (main and release/** may use it). It cannot
   # write to the repository: release-prepare made the tags (--no-git-tag).
-  # A release that bumps only the extension publishes nothing here.
+  # Skipped when the release bumps no npm package (only the extension).
   publish-npm:
     needs: release-prepare
+    if: needs.release-prepare.outputs.npm == 'true'
     runs-on: ubuntu-latest
     environment: publish-npm
     concurrency:
@@ -166,10 +189,11 @@ jobs:
   # "publish-extension" environment, which only main may use. Both registries
   # use trusted publishing (OIDC, registered for this workflow and environment),
   # so no publish token is stored.
-  # --skip-duplicate turns a release that did not bump the extension into a no-op.
+  # Skipped when the release does not bump the extension. --skip-duplicate makes
+  # a re-run after a partial publish skip the store that already has the version.
   publish-extension:
     needs: release-prepare
-    if: github.ref_name == 'main'
+    if: github.ref_name == 'main' && needs.release-prepare.outputs.extension == 'true'
     runs-on: ubuntu-latest
     environment: publish-extension
     # One extension publish at a time; waiting for approval holds back only the
