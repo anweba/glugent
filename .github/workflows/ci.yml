@@ -35,12 +35,13 @@ jobs:
       # missing, or has files no target writes any more (fix with npm run examples:build).
       - run: npm run examples:check
       # Pull requests that touch a package need a changeset (npm run changeset).
-      # The Version Packages PR is exempt: it consumes the changesets.
-      - if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
+      # The Version Packages PR is exempt: it consumes the changesets. It comes from this
+      # repository; a fork can name a branch the same, so a fork's branch is never exempt.
+      - if: github.event_name == 'pull_request' && !(startsWith(github.head_ref, 'changeset-release/') && github.event.pull_request.head.repo.full_name == github.repository)
         run: npx changeset status --since=origin/${{ github.base_ref }}
       # The Version Packages PR must have consumed every changeset, including any that
       # reached it by merging the base branch in, so merging it releases everything pending.
-      - if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'changeset-release/')
+      - if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'changeset-release/') && github.event.pull_request.head.repo.full_name == github.repository
         run: |
           pending=$(find .changeset -maxdepth 1 -name '*.md' ! -name README.md)
           if [ -n "$pending" ]; then

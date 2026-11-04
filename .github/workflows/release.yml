@@ -3,6 +3,9 @@ name: Release
 on:
   push:
     branches: [main, "release/**"]
+    # Only merges that add a changeset or change a package manifest, which every
+    # Version Packages PR does. Other merges have nothing to version or release.
+    paths: [".changeset/**", "packages/*/package.json"]
 
 # No workflow-wide concurrency: a run waiting for an approval would otherwise
 # hold back every later run on the branch, versioning included. Each job that
@@ -13,11 +16,10 @@ on:
 # No permissions by default; each job asks for only what it needs.
 #
 # The jobs split the work by what it needs:
-#   version            opens/updates the Version Packages PR   repo + PR write
-#   build              builds dist/ and the .vsix               read only
-#   release-prepare    tags, GitHub Releases                    repo write
-#   publish-npm        publishes to npm                         id-token, environment
-#   publish-extension  publishes to Marketplace and Open VSX    id-token, environment
+#   version            Version Packages PR, tags, GitHub Releases   repo + PR write
+#   build              builds dist/ and the .vsix                   read only
+#   publish-npm        publishes to npm                             id-token, environment
+#   publish-extension  publishes to Marketplace and Open VSX        id-token, environment
 # Each publish job runs in the GitHub environment of the same name.
 # No job can both write to the repository and mint a publish token. The publish
 # jobs run no build and no install script: just the publishing tool, from the
@@ -27,7 +29,10 @@ permissions: {}
 jobs:
   # On a feature merge: opens or updates the "Version Packages" PR against the
   # pushed branch (main, or a release/<line> maintenance branch). On the merge
-  # of that PR no changesets are left, and the jobs below release it.
+  # of that PR no changesets are left, so the action runs `changeset tag` in
+  # place of a publish: it tags every package version with no tag on GitHub yet
+  # (`<name>@<version>`, the extension too), pushes those tags and creates a
+  # GitHub Release for each from its changelog entry. The jobs below release it.
   version:
     runs-on: ubuntu-latest
     concurrency:
@@ -36,11 +41,9 @@ jobs:
       contents: write
       pull-requests: write
     outputs:
-      # "true" if this commit releases something for that registry; the jobs
-      # below are skipped otherwise (a feature merge, or a merge with nothing
-      # to release), so nothing is built and no approval is asked for nothing.
-      npm: ${{ steps.released.outputs.npm }}
-      extension: ${{ steps.released.outputs.extension }}
+      # "false" on the merge of a Version Packages PR: CI makes that PR consume
+      # every changeset. The jobs below run only then.
+      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -52,34 +55,44 @@ jobs:
       # --ignore-scripts: no dependency install script runs in a job that can
       # write to the repository.
       - run: npm ci --ignore-scripts
-      # No `publish` input: this job only versions; the jobs below release.
       - uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1 (v1.9.0)
         id: changesets
         with:
           version: npm run version
+          publish: npx changeset tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # A release is the merge of a Version Packages PR: the commit that raises
-      # a package's "version" (a re-run checks the same commit, so gets the same
-      # answer). glugent-vscode is the only package not published to npm.
-      - id: released
-        if: steps.changesets.outputs.hasChangesets == 'false'
+      # A Version Packages merge with changesets pending would release nothing.
+      # CI and up-to-date checks should prevent it; if not, fail rather than go green.
+      - if: steps.changesets.outputs.hasChangesets == 'true' && startsWith(github.event.head_commit.message, 'Merge pull request') && contains(github.event.head_commit.message, '/changeset-release/')
         run: |
-          bumped() { grep -q '^+  "version":' <(git diff -U0 HEAD^ HEAD -- "$@"); }
-          echo "npm=$(bumped 'packages/*/package.json' ':!packages/vscode/package.json' && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          echo "extension=$(bumped packages/vscode/package.json && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "::error::This Version Packages merge released nothing: changesets are still pending. Merge the updated Version Packages PR to release."
+          exit 1
 
   # Builds what is released, with no secrets and no id-token, so nothing in
   # npm ci or the build can publish. Hands dist/ of the npm packages to
-  # publish-npm and, on main, the .vsix to publish-extension.
+  # publish-npm and, on main, the .vsix to publish-extension. Also says which
+  # manifests this commit changed, so a release asks for approval only for the
+  # registries it bumps; a re-run checks the same commit, so gets the same answer.
   build:
     needs: version
-    if: needs.version.outputs.npm == 'true' || needs.version.outputs.extension == 'true'
+    if: needs.version.outputs.hasChangesets == 'false'
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      npm: ${{ steps.bumped.outputs.npm }}
+      extension: ${{ steps.bumped.outputs.extension }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      # base is this branch: compare with the commit before this push.
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: bumped
+        with:
+          base: ${{ github.ref_name }}
+          filters: |
+            npm: packages/!(vscode)/package.json
+            extension: packages/vscode/package.json
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
@@ -88,8 +101,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run build
       # @anweba/glugent-schemas has no build: it publishes the committed JSON files.
-      - if: needs.version.outputs.npm == 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: npm-dist
           path: |
@@ -97,53 +109,26 @@ jobs:
             packages/cli/dist
             !packages/*/dist/test
           if-no-files-found: error
-          retention-days: 1
-      - if: github.ref_name == 'main' && needs.version.outputs.extension == 'true'
+          retention-days: 30  # an approval can wait up to 30 days
+      - if: github.ref_name == 'main'
         run: npm run package -w glugent-vscode
-      - if: github.ref_name == 'main' && needs.version.outputs.extension == 'true'
+      - if: github.ref_name == 'main'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: vsix
           path: packages/vscode/glugent-vscode-*.vsix
           if-no-files-found: error
-          retention-days: 1
-
-  # Cuts the release once build succeeded. The action runs `changeset tag`
-  # in place of a publish: it tags every package the Version Packages PR bumped
-  # (`<name>@<version>`, the extension too), pushes the tags and creates a
-  # GitHub Release for each from its changelog entry. This job can write to the
-  # repository but has no id-token, so it cannot publish.
-  release-prepare:
-    needs: build
-    runs-on: ubuntu-latest
-    concurrency:
-      group: release-prepare-${{ github.ref }}
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci --ignore-scripts
-      - uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1 (v1.9.0)
-        with:
-          publish: npx changeset tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          retention-days: 30  # an approval can wait up to 30 days
 
   # Publishes to npm the dist/ that build made. npm trusted publishing: the job
   # exchanges its OIDC identity for a short-lived publish token, so no NPM_TOKEN
   # is stored; the trusted publisher on npm is registered for this workflow and
   # the "publish-npm" environment (main and release/** may use it). It cannot
-  # write to the repository: release-prepare made the tags (--no-git-tag).
+  # write to the repository: version made the tags (--no-git-tag).
   # Skipped when the release bumps no npm package (only the extension).
   publish-npm:
-    needs: [version, release-prepare]
-    if: needs.version.outputs.npm == 'true'
+    needs: build
+    if: needs.build.outputs.npm == 'true'
     runs-on: ubuntu-latest
     environment: publish-npm
     concurrency:
@@ -182,8 +167,8 @@ jobs:
   # Skipped when the release does not bump the extension. --skip-duplicate makes
   # a re-run after a partial publish skip the store that already has the version.
   publish-extension:
-    needs: [version, release-prepare]
-    if: github.ref_name == 'main' && needs.version.outputs.extension == 'true'
+    needs: build
+    if: github.ref_name == 'main' && needs.build.outputs.extension == 'true'
     runs-on: ubuntu-latest
     environment: publish-extension
     # One extension publish at a time; waiting for approval holds back only the

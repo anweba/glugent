@@ -1,8 +1,12 @@
-# Changes to what runs in CI and releases, and to how packages are published,
-# need the owner's review (with "Require review from Code Owners" on main).
-/.github/                 @AnToniceQ
-/.githooks/               @AnToniceQ
-/.changeset/config.json   @AnToniceQ
-/package.json             @AnToniceQ
-/packages/*/package.json  @AnToniceQ
-/scripts/                 @AnToniceQ
+# What runs in CI and releases, what gets installed, and how packages are published.
+# GitHub requests the owner's review on these paths; it is required only while a
+# ruleset on the branch has "Require review from Code Owners" on.
+/.github/                       @AnToniceQ
+/.githooks/                     @AnToniceQ
+/.changeset/config.json         @AnToniceQ
+/.nvmrc                         @AnToniceQ
+/package.json                   @AnToniceQ
+/package-lock.json              @AnToniceQ
+/packages/*/package.json        @AnToniceQ
+/packages/vscode/.vscodeignore  @AnToniceQ
+/scripts/                       @AnToniceQ
