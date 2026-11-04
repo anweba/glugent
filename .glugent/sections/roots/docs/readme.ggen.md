@@ -9,6 +9,7 @@ description: README.md of the repository
 [![CI]({REPO_URL}/actions/workflows/ci.yml/badge.svg)]({REPO_URL}/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/glugent)](https://www.npmjs.com/package/glugent)
 [![downloads](https://img.shields.io/npm/dm/glugent)](https://www.npmjs.com/package/glugent)
+[![Open VSX downloads](https://img.shields.io/open-vsx/dt/anweba/glugent-vscode?label=Open%20VSX%20downloads)](https://open-vsx.org/extension/anweba/glugent-vscode)
 [![license](https://img.shields.io/github/license/anweba/glugent)](LICENSE)
 
 Glue Markdown **sections** into **targets**: agents, docs, or anything else you build from Markdown. Sections are ordinary Markdown with `{{props}}`; targets are small JSON files listing which sections to glue together.
