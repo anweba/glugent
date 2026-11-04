@@ -15,9 +15,12 @@ updates:
       default-days: 7
     commit-message:
       prefix: chore
+    # Majors come one by one, as they can need changes to the workflows. changesets/action and
+    # @changesets/cli depend on each other's major version: move them together, by hand.
     groups:
       actions:
         patterns: ["*"]
+        update-types: [minor, patch]
 
   # The root covers every workspace through the root package-lock.json.
   - package-ecosystem: npm
