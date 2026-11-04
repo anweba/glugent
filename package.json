@@ -37,7 +37,7 @@
     "prepare": "node scripts/install-git-hooks.mjs || exit 0"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "^0.7.0",
+    "@changesets/changelog-github": "^1.0.1",
     "@changesets/cli": "^2.31.1",
     "@types/node": "^22.20.5",
     "typescript": "6.0.3"
