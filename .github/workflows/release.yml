@@ -29,7 +29,7 @@ permissions: {}
 jobs:
   # On a feature merge: opens or updates the "Version Packages" PR against the
   # pushed branch (main, or a release/<line> maintenance branch). On the merge
-  # of that PR no changesets are left, so the action runs `changeset tag` in
+  # of that PR no changesets are left, so the action runs `changeset git-tag` in
   # place of a publish: it tags every package version with no tag on GitHub yet
   # (`<name>@<version>`, the extension too), pushes those tags and creates a
   # GitHub Release for each from its changelog entry. The jobs below release it.
@@ -43,7 +43,7 @@ jobs:
     outputs:
       # "false" on the merge of a Version Packages PR: CI makes that PR consume
       # every changeset. The jobs below run only then.
-      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
+      hasChangesets: ${{ steps.changesets.outputs.has-changesets }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -55,16 +55,14 @@ jobs:
       # --ignore-scripts: no dependency install script runs in a job that can
       # write to the repository.
       - run: npm ci --ignore-scripts
-      - uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v1 (v1.9.0)
+      - uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         id: changesets
         with:
-          version: npm run version
-          publish: npx changeset tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          version-script: npm run version
+          publish-script: npx changeset git-tag
       # A Version Packages merge with changesets pending would release nothing.
       # CI and up-to-date checks should prevent it; if not, fail rather than go green.
-      - if: steps.changesets.outputs.hasChangesets == 'true' && startsWith(github.event.head_commit.message, 'Merge pull request') && contains(github.event.head_commit.message, '/changeset-release/')
+      - if: steps.changesets.outputs.has-changesets == 'true' && startsWith(github.event.head_commit.message, 'Merge pull request') && contains(github.event.head_commit.message, '/changeset-release/')
         run: |
           echo "::error::This Version Packages merge released nothing: changesets are still pending. Merge the updated Version Packages PR to release."
           exit 1
